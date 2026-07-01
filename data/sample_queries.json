@@ -1,0 +1,14 @@
+[
+  {
+    "label": "Why do RAG systems hallucinate?",
+    "question": "Why do RAG systems hallucinate even when retrieval is enabled?"
+  },
+  {
+    "label": "How should unsupported claims be handled?",
+    "question": "How can a RAG system detect unsupported claims and correct them before the answer is returned?"
+  },
+  {
+    "label": "What should the API return?",
+    "question": "What fields should a production hallucination detection API return?"
+  }
+]

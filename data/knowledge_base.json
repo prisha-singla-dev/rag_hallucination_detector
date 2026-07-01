@@ -1,0 +1,32 @@
+[
+  {
+    "title": "RAG Hallucination Failure Mode",
+    "source": "internal-note://rag-reliability-01",
+    "text": "Hallucinations in retrieval-augmented generation often happen when the model answers beyond the retrieved evidence or when retrieval misses the necessary chunk entirely."
+  },
+  {
+    "title": "Grounding Strategy",
+    "source": "internal-note://rag-reliability-02",
+    "text": "A practical mitigation is to score each answer sentence against the retrieved context and mark unsupported claims before returning the final response."
+  },
+  {
+    "title": "Auto-correction Loop",
+    "source": "internal-note://rag-reliability-03",
+    "text": "Auto-correction can re-query on unsupported claims, pull tighter evidence, and regenerate a shorter answer constrained to grounded chunks."
+  },
+  {
+    "title": "Confidence API",
+    "source": "internal-note://rag-reliability-04",
+    "text": "A production API should return the answer, a hallucination score, evidence used, claim-level verdicts, and a corrected answer when risk is high."
+  },
+  {
+    "title": "Dashboard Value",
+    "source": "internal-note://rag-reliability-05",
+    "text": "A dashboard becomes persuasive when it highlights unsupported claims in red, shows the evidence source, and compares confidence before and after correction."
+  },
+  {
+    "title": "Free MVP Constraint",
+    "source": "internal-note://project-constraint-01",
+    "text": "A free MVP can use FastAPI, Streamlit, sentence-transformers, and FAISS locally without paying for hosted vector databases or proprietary language models."
+  }
+]
