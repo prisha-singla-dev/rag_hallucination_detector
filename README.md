@@ -14,7 +14,7 @@ What the MVP does:
 - scores each claim against evidence
 - flags unsupported claims
 - auto-corrects the answer by removing unsupported content
-- shows answer confidence and correction delta in a Streamlit dashboard
+- shows hallucination risk, confidence, evidence, and correction in a custom frontend
 
 What we are intentionally not doing in the first ship:
 
@@ -27,7 +27,7 @@ What we are intentionally not doing in the first ship:
 
 - Python
 - FastAPI
-- Streamlit
+- HTML/CSS/JavaScript
 - sentence-transformers
 - FAISS
 - LangChain
@@ -39,12 +39,12 @@ Notes:
 
 ## Project Structure
 
-- [backend/app.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/app.py): FastAPI app and API routes
+- [backend/app.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/app.py): FastAPI app, API routes, and frontend entry route
 - [backend/core/pipeline.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/core/pipeline.py): query, claim scoring, and auto-correction flow
 - [backend/core/retriever.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/core/retriever.py): local retrieval with embedding fallback
-- [dashboard/app.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/dashboard/app.py): Streamlit demo UI
+- [frontend/index.html](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/frontend/index.html): primary demo UI served by FastAPI
 - [data/knowledge_base.json](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/data/knowledge_base.json): seed knowledge base for local testing
-- [data/sample_queries.json](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/data/sample_queries.json): dashboard examples
+- [data/sample_queries.json](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/data/sample_queries.json): sample scenarios for future expansion
 
 ## API Contract
 
@@ -80,24 +80,31 @@ Output:
 
 Use this when you already have an answer and want claim-level grounding plus correction.
 
+## UI Flow
 
-### Block 1: before 11
+- `GET /`: opens the main product-style demo UI
+- query mode: generate an answer, score claims, and show auto-correction
+- inspect mode: paste an answer you already have and audit it directly
 
-- create and activate a virtual environment
-- install dependencies
-- run the FastAPI health endpoint
+## Today's Work
 
-### Block 2: 12 to 3
+### Before 11
 
-- verify `POST /query` returns a generated answer
-- verify unsupported sentence injection is getting flagged
-- open the Streamlit dashboard and run the sample queries
+- create and activate a fresh virtual environment
+- install dependencies from `requirements.txt`
+- run the API and open the custom frontend
 
-### Block 3: after 5
+### 12 to 3
+
+- run `query` mode against the seeded knowledge base
+- run `inspect` mode with a manually written risky answer
+- note where the claim scoring feels weak or too optimistic
+
+### After 5
 
 - replace the seed knowledge base with your chosen demo domain
 - add 10 to 15 realistic questions for that domain
-- note the first bugs or weak spots in the README or issues list
+- pick 3 demo scenarios you want to rehearse by July 14
 
 ## Local Run
 
@@ -108,7 +115,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-Use a fresh virtual environment for this project. The system Python on this machine already has incompatible `numpy/scipy/pandas` binaries, and Streamlit will fail if it picks those up.
+Use a fresh virtual environment for this project. The system Python on this machine already has incompatible scientific Python binaries, so the clean venv matters.
 
 ### 2. Install dependencies
 
@@ -119,21 +126,19 @@ pip install -r requirements.txt
 ### 3. Start the API
 
 ```powershell
-uvicorn backend.app:app --reload
+uvicorn backend.app:app --reload --port 8001
 ```
 
-### 4. Start the dashboard
+### 4. Open the app
 
-```powershell
-streamlit run dashboard/app.py
-```
+Open [http://127.0.0.1:8001](http://127.0.0.1:8001)
 
 ## Near-Term Goal
 
 By end of today, the repo should have:
 
 - a running FastAPI app
-- a running Streamlit dashboard
+- a usable custom frontend
 - a local seed knowledge base
 - a claim-level detector flow
 - a visible corrected answer path
