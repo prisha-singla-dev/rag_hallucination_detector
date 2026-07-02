@@ -5,35 +5,812 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RAG Hallucination Detector</title>
     <style>
+      :root {
+        --bg: #f4f7fb;
+        --panel: #ffffff;
+        --panel-soft: #f8fafc;
+        --ink: #101828;
+        --muted: #475467;
+        --line: #d0d5dd;
+        --accent: #0f766e;
+        --accent-strong: #115e59;
+        --danger: #b42318;
+        --danger-soft: #fef3f2;
+        --success: #027a48;
+        --success-soft: #ecfdf3;
+        --warning: #b54708;
+        --warning-soft: #fffaeb;
+        --shadow: 0 20px 40px rgba(16, 24, 40, 0.08);
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: Arial, sans-serif;
         margin: 0;
-        min-height: 100vh;
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--ink);
+      }
+
+      button,
+      textarea,
+      select {
+        font: inherit;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--line);
+      }
+
+      .shell,
+      .footer {
+        width: min(1360px, calc(100vw - 32px));
+        margin: 0 auto;
+      }
+
+      .topbar-inner {
+        width: min(1360px, calc(100vw - 32px));
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px 0;
+      }
+
+      .brand {
         display: grid;
-        place-items: center;
-        background: #f8fafc;
-        color: #0f172a;
+        gap: 4px;
       }
-      main {
-        max-width: 720px;
-        padding: 32px;
+
+      .brand h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
       }
+
+      .brand p,
+      .section-copy,
+      .helper,
+      .footer,
+      .empty,
+      .meta {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .topbar-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: #fff;
+        padding: 8px 12px;
+        min-height: 38px;
+        font-size: 14px;
+      }
+
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: #98a2b3;
+      }
+
+      .dot.live {
+        background: var(--success);
+      }
+
+      .shell {
+        display: grid;
+        grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
+        gap: 20px;
+        padding: 24px 0 28px;
+      }
+
+      .surface {
+        background: var(--panel);
+        border: 1px solid rgba(16, 24, 40, 0.08);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .panel,
+      .section {
+        padding: 20px;
+      }
+
+      .panel-head,
+      .section-head {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 18px;
+      }
+
+      h2,
+      h3 {
+        margin: 0;
+      }
+
+      .segment {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel-soft);
+      }
+
+      .segment button {
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        min-height: 42px;
+        padding: 10px 12px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      .segment button.active {
+        background: #fff;
+        color: var(--ink);
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+        margin-top: 18px;
+      }
+
+      label {
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 12px 14px;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      textarea {
+        min-height: 128px;
+        resize: vertical;
+        line-height: 1.5;
+      }
+
+      .field-row {
+        display: grid;
+        grid-template-columns: 1fr 120px;
+        gap: 12px;
+      }
+
+      .presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .preset {
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--ink);
+        border-radius: 999px;
+        padding: 8px 12px;
+        cursor: pointer;
+      }
+
+      .toggle {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        margin-top: 18px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-soft);
+      }
+
+      .toggle input {
+        width: 18px;
+        height: 18px;
+      }
+
+      .primary {
+        width: 100%;
+        min-height: 48px;
+        margin-top: 20px;
+        border: 0;
+        border-radius: 8px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .primary:hover {
+        background: var(--accent-strong);
+      }
+
+      .primary:disabled {
+        background: #98a2b3;
+        cursor: wait;
+      }
+
+      .results {
+        display: grid;
+        gap: 20px;
+      }
+
+      .banner {
+        display: none;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        padding: 14px 16px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+      }
+
+      .banner.show {
+        display: flex;
+      }
+
+      .banner.warning {
+        background: var(--warning-soft);
+        border-color: #fedf89;
+      }
+
+      .banner.success {
+        background: var(--success-soft);
+        border-color: #abefc6;
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .metric {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+        background: #fff;
+      }
+
+      .metric .label {
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .metric .value {
+        margin-top: 10px;
+        font-size: 28px;
+        font-weight: 700;
+      }
+
+      .responses {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .response-box {
+        min-height: 180px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+        background: var(--panel-soft);
+      }
+
+      .response-box p,
+      .claim-text,
+      .evidence-text {
+        margin: 0;
+        white-space: pre-wrap;
+        line-height: 1.6;
+      }
+
+      .claims,
+      .evidence {
+        display: grid;
+        gap: 12px;
+      }
+
+      .claim,
+      .evidence-item {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px 16px;
+        background: #fff;
+      }
+
+      .row {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .badge.success {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+
+      .badge.danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      .footer {
+        width: min(1360px, calc(100vw - 32px));
+        padding: 0 0 32px;
+        font-size: 13px;
+      }
+
       code {
         background: #e2e8f0;
         padding: 2px 6px;
         border-radius: 4px;
       }
+
+      @media (max-width: 1024px) {
+        .shell {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .topbar-inner,
+        .shell,
+        .footer {
+          width: min(100vw - 20px, 1360px);
+        }
+
+        .field-row,
+        .metrics,
+        .responses {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
-    <main>
-      <h1>RAG Hallucination Detector</h1>
-      <p>
-        The main demo UI for this project lives in <code>dashboard/app.py</code> and talks to the
-        FastAPI backend in <code>backend/app.py</code>.
-      </p>
-      <p>Start the API with <code>uvicorn backend.app:app --reload</code>.</p>
-      <p>Start the dashboard with <code>streamlit run dashboard/app.py</code>.</p>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <h1>RAG Hallucination Detector</h1>
+          <p>Catch unsupported claims, surface evidence, and auto-correct risky answers.</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="pill">
+            <span id="api-dot" class="dot"></span>
+            <span id="api-status">Checking API</span>
+          </div>
+          <div class="pill" id="kb-count">Knowledge base: --</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section class="surface panel">
+        <div class="panel-head">
+          <h2>Run analysis</h2>
+          <p class="section-copy">
+            Generate an answer and inspect it, or paste an answer you already have and audit it directly.
+          </p>
+        </div>
+
+        <div class="segment">
+          <button id="query-mode" class="active" type="button">Query Pipeline</button>
+          <button id="detect-mode" type="button">Inspect Answer</button>
+        </div>
+
+        <div class="field">
+          <label for="question">Question</label>
+          <textarea id="question">How can a RAG system detect unsupported claims and correct them before the answer is returned?</textarea>
+        </div>
+
+        <div class="field hidden" id="answer-field">
+          <label for="answer">Answer to inspect</label>
+          <textarea id="answer">A good system should score each sentence against retrieved context, flag unsupported claims, and re-query before regenerating a grounded answer.</textarea>
+          <p class="helper">Only used in inspect mode.</p>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="preset">Example scenario</label>
+            <select id="preset"></select>
+          </div>
+          <div class="field">
+            <label for="topk">Top K</label>
+            <select id="topk">
+              <option value="3">3</option>
+              <option value="4" selected>4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="presets" id="preset-chips"></div>
+
+        <div class="toggle" id="simulate-wrap">
+          <div>
+            <label for="simulate" style="display: block;">Inject unsupported claim</label>
+            <p class="helper">Useful for a recruiter demo where you want the detector to visibly catch something.</p>
+          </div>
+          <input id="simulate" type="checkbox" checked />
+        </div>
+
+        <button id="run" class="primary" type="button">Run analysis</button>
+      </section>
+
+      <section class="results">
+        <div id="banner" class="banner">
+          <div>
+            <strong id="banner-title">Waiting for input</strong>
+            <p class="section-copy" id="banner-copy">Run the pipeline to see grounded and unsupported claims.</p>
+          </div>
+        </div>
+
+        <section class="surface section">
+          <div class="section-head">
+            <h2>Risk summary</h2>
+            <p class="section-copy">Confidence before and after correction.</p>
+          </div>
+          <div class="metrics">
+            <div class="metric">
+              <div class="label">Hallucination score</div>
+              <div class="value" id="risk-value">--</div>
+            </div>
+            <div class="metric">
+              <div class="label">Answer confidence</div>
+              <div class="value" id="confidence-value">--</div>
+            </div>
+            <div class="metric">
+              <div class="label">Confidence delta</div>
+              <div class="value" id="delta-value">--</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="surface section">
+          <div class="section-head">
+            <h2>Response comparison</h2>
+            <p class="section-copy">Original output next to the grounded correction.</p>
+          </div>
+          <div class="responses">
+            <article class="response-box">
+              <h3>Original answer</h3>
+              <p id="original-answer" class="empty">No answer yet.</p>
+            </article>
+            <article class="response-box">
+              <h3>Corrected answer</h3>
+              <p id="corrected-answer" class="empty">No correction yet.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="surface section">
+          <div class="section-head">
+            <h2>Claim grounding</h2>
+            <p class="section-copy">Each claim is scored against the best supporting evidence chunk.</p>
+          </div>
+          <div id="claims" class="claims">
+            <p class="empty">Claims will appear here after a run.</p>
+          </div>
+        </section>
+
+        <section class="surface section">
+          <div class="section-head">
+            <h2>Retrieved evidence</h2>
+            <p class="section-copy">These chunks were used to ground the answer.</p>
+          </div>
+          <div id="evidence" class="evidence">
+            <p class="empty">Evidence will appear here after a run.</p>
+          </div>
+        </section>
+      </section>
     </main>
+
+    <div class="footer">
+      Start with <code>uvicorn backend.app:app --reload --port 8001</code> and open <code>http://127.0.0.1:8001</code>.
+    </div>
+
+    <script>
+      const presets = [
+        {
+          label: "Why RAG hallucinates",
+          question: "Why do RAG systems hallucinate even when retrieval is enabled?",
+          answer:
+            "RAG systems hallucinate when the model answers beyond the retrieved evidence and when retrieval misses the needed chunk."
+        },
+        {
+          label: "Unsupported claim handling",
+          question: "How can a RAG system detect unsupported claims and correct them before the answer is returned?",
+          answer:
+            "A good system should score each sentence against retrieved context, flag unsupported claims, and re-query before regenerating a grounded answer."
+        },
+        {
+          label: "Production API contract",
+          question: "What fields should a production hallucination detection API return?",
+          answer:
+            "It should return the answer, evidence used, claim-level verdicts, a hallucination score, and a corrected answer when the risk is high."
+        }
+      ];
+
+      const queryModeButton = document.getElementById("query-mode");
+      const detectModeButton = document.getElementById("detect-mode");
+      const answerField = document.getElementById("answer-field");
+      const simulateWrap = document.getElementById("simulate-wrap");
+      const questionInput = document.getElementById("question");
+      const answerInput = document.getElementById("answer");
+      const runButton = document.getElementById("run");
+      const presetSelect = document.getElementById("preset");
+      const presetChips = document.getElementById("preset-chips");
+      const topKSelect = document.getElementById("topk");
+      const simulateToggle = document.getElementById("simulate");
+      const apiDot = document.getElementById("api-dot");
+      const apiStatus = document.getElementById("api-status");
+      const kbCount = document.getElementById("kb-count");
+      const banner = document.getElementById("banner");
+      const bannerTitle = document.getElementById("banner-title");
+      const bannerCopy = document.getElementById("banner-copy");
+      const riskValue = document.getElementById("risk-value");
+      const confidenceValue = document.getElementById("confidence-value");
+      const deltaValue = document.getElementById("delta-value");
+      const originalAnswer = document.getElementById("original-answer");
+      const correctedAnswer = document.getElementById("corrected-answer");
+      const claims = document.getElementById("claims");
+      const evidence = document.getElementById("evidence");
+
+      let mode = "query";
+
+      function formatNumber(value) {
+        return typeof value === "number" ? value.toFixed(2) : "--";
+      }
+
+      function setMode(nextMode) {
+        mode = nextMode;
+        const isQuery = nextMode === "query";
+        queryModeButton.classList.toggle("active", isQuery);
+        detectModeButton.classList.toggle("active", !isQuery);
+        answerField.classList.toggle("hidden", isQuery);
+        simulateWrap.classList.toggle("hidden", !isQuery);
+        runButton.textContent = isQuery ? "Run analysis" : "Inspect answer";
+      }
+
+      function applyPreset(index) {
+        const preset = presets[index];
+        presetSelect.value = String(index);
+        questionInput.value = preset.question;
+        answerInput.value = preset.answer;
+      }
+
+      function populatePresets() {
+        presets.forEach((preset, index) => {
+          const option = document.createElement("option");
+          option.value = String(index);
+          option.textContent = preset.label;
+          presetSelect.appendChild(option);
+
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "preset";
+          chip.textContent = preset.label;
+          chip.addEventListener("click", () => applyPreset(index));
+          presetChips.appendChild(chip);
+        });
+      }
+
+      function setBanner(kind, title, copy) {
+        banner.className = `banner show ${kind}`;
+        bannerTitle.textContent = title;
+        bannerCopy.textContent = copy;
+      }
+
+      function renderClaims(items) {
+        claims.innerHTML = "";
+        if (!items.length) {
+          claims.innerHTML = '<p class="empty">No claims were returned.</p>';
+          return 0;
+        }
+
+        let unsupportedCount = 0;
+
+        items.forEach((item) => {
+          const unsupported = item.verdict === "unsupported";
+          if (unsupported) {
+            unsupportedCount += 1;
+          }
+
+          const node = document.createElement("article");
+          node.className = "claim";
+          node.innerHTML = `
+            <div class="row">
+              <strong>${item.evidence.title}</strong>
+              <span class="badge ${unsupported ? "danger" : "success"}">${item.verdict}</span>
+            </div>
+            <p class="claim-text">${item.claim}</p>
+            <p class="meta">Support score: ${formatNumber(item.support_score)} | Source: ${item.evidence.source}</p>
+          `;
+          claims.appendChild(node);
+        });
+
+        return unsupportedCount;
+      }
+
+      function renderEvidence(items) {
+        evidence.innerHTML = "";
+        if (!items.length) {
+          evidence.innerHTML = '<p class="empty">No evidence chunks were returned.</p>';
+          return;
+        }
+
+        items.forEach((item) => {
+          const node = document.createElement("article");
+          node.className = "evidence-item";
+          node.innerHTML = `
+            <div class="row">
+              <strong>${item.title}</strong>
+              <span class="badge success">score ${formatNumber(item.score)}</span>
+            </div>
+            <p class="evidence-text">${item.text}</p>
+            <p class="meta">${item.source}</p>
+          `;
+          evidence.appendChild(node);
+        });
+      }
+
+      function setLoading(loading) {
+        runButton.disabled = loading;
+        if (loading) {
+          runButton.textContent = mode === "query" ? "Running..." : "Inspecting...";
+        } else {
+          runButton.textContent = mode === "query" ? "Run analysis" : "Inspect answer";
+        }
+      }
+
+      async function getJson(url, options) {
+        const response = await fetch(url, options);
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || `Request failed with ${response.status}`);
+        }
+        return response.json();
+      }
+
+      async function bootstrap() {
+        try {
+          const health = await getJson("/health");
+          const kb = await getJson("/knowledge-base");
+          if (health.status === "ok") {
+            apiDot.classList.add("live");
+            apiStatus.textContent = "API live";
+          }
+          kbCount.textContent = `Knowledge base: ${kb.document_count} chunks`;
+        } catch (error) {
+          apiDot.classList.remove("live");
+          apiStatus.textContent = "API unavailable";
+          kbCount.textContent = "Knowledge base: unavailable";
+        }
+      }
+
+      async function runAnalysis() {
+        const question = questionInput.value.trim();
+        if (!question) {
+          setBanner("warning", "Question required", "Add a question before running the analysis.");
+          return;
+        }
+
+        const payload = mode === "query"
+          ? {
+              question,
+              top_k: Number(topKSelect.value),
+              simulate_hallucination: simulateToggle.checked
+            }
+          : {
+              question,
+              answer: answerInput.value.trim(),
+              top_k: Number(topKSelect.value)
+            };
+
+        if (mode === "detect" && !payload.answer) {
+          setBanner("warning", "Answer required", "Paste an answer to inspect when using detect mode.");
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const endpoint = mode === "query" ? "/query" : "/detect";
+          const result = await getJson(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+
+          riskValue.textContent = formatNumber(result.hallucination_score);
+          confidenceValue.textContent = formatNumber(result.answer_confidence);
+          deltaValue.textContent = formatNumber(result.confidence_delta);
+          originalAnswer.textContent = result.answer;
+          correctedAnswer.textContent = result.corrected_answer;
+
+          const unsupportedCount = renderClaims(result.claims);
+          renderEvidence(result.retrieved_chunks);
+
+          if (unsupportedCount > 0) {
+            setBanner(
+              "warning",
+              `${unsupportedCount} unsupported claim${unsupportedCount > 1 ? "s" : ""} detected`,
+              "The detector flagged claims that were not well grounded in retrieved evidence and generated a safer correction."
+            );
+          } else {
+            setBanner(
+              "success",
+              "All visible claims look grounded",
+              "The answer stayed within the retrieved context, so the correction path did not need to remove risky claims."
+            );
+          }
+        } catch (error) {
+          setBanner("warning", "Request failed", error.message || "The API request could not be completed.");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      queryModeButton.addEventListener("click", () => setMode("query"));
+      detectModeButton.addEventListener("click", () => setMode("detect"));
+      presetSelect.addEventListener("change", (event) => applyPreset(Number(event.target.value)));
+      runButton.addEventListener("click", runAnalysis);
+
+      populatePresets();
+      applyPreset(1);
+      setMode("query");
+      bootstrap();
+    </script>
   </body>
 </html>

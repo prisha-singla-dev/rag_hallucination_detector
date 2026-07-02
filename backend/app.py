@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 
 from backend.core.pipeline import HallucinationPipeline
 from backend.core.schemas import DetectRequest, DetectResponse, QueryRequest, QueryResponse
@@ -22,6 +25,12 @@ app.add_middleware(
 )
 
 pipeline = HallucinationPipeline()
+FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
+
+
+@app.get("/", include_in_schema=False)
+def index() -> FileResponse:
+    return FileResponse(FRONTEND_PATH)
 
 
 @app.get("/health")
