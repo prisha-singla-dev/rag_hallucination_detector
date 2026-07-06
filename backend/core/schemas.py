@@ -39,6 +39,7 @@ class BaseDetectionResponse(BaseModel):
     question: str
     answer: str
     corrected_answer: str
+    retrieval_mode: str
     answer_confidence: float
     corrected_confidence: float
     confidence_delta: float

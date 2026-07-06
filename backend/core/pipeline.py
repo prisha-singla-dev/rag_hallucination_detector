@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-import re
 from statistics import mean
 
+from backend.core.claim_extractor import extract_claims
 from backend.core.knowledge_base import KnowledgeChunk, list_document_sources, load_knowledge_chunks
 from backend.core.retriever import HybridRetriever
 from backend.core.schemas import ClaimResult, DetectRequest, DetectResponse, EvidenceChunk, QueryRequest, QueryResponse
 
 
-SENTENCE_SPLIT_PATTERN = re.compile(r"(?<=[.!?])\s+")
-MIN_GROUNDED_SCORE = 0.34
+MIN_GROUNDED_SCORE = 0.42
 
 
 class HallucinationPipeline:
@@ -30,21 +29,21 @@ class HallucinationPipeline:
         )
 
     def _split_claims(self, answer: str) -> list[str]:
-        sentences = [sentence.strip() for sentence in SENTENCE_SPLIT_PATTERN.split(answer.strip())]
-        return [sentence for sentence in sentences if sentence]
+        return extract_claims(answer)
 
     def _generate_answer(self, question: str, retrieved_chunks: list[EvidenceChunk], simulate_hallucination: bool) -> str:
         if not retrieved_chunks:
             return "I could not retrieve any relevant context from the knowledge base."
 
-        lead = retrieved_chunks[0].text
-        supporting = retrieved_chunks[1].text if len(retrieved_chunks) > 1 else ""
+        answer_parts: list[str] = []
+        lead = retrieved_chunks[0].text.rstrip(".")
+        answer_parts.append(f"The retrieved evidence suggests that {lead}.")
 
-        answer_parts = [
-            f"Based on the retrieved sources, {lead}",
-        ]
-        if supporting:
-            answer_parts.append(supporting)
+        supporting_chunks = retrieved_chunks[1:3]
+        for chunk in supporting_chunks:
+            supporting_text = chunk.text.rstrip(".")
+            answer_parts.append(f"It also shows that {supporting_text.lower()}.")
+
         if simulate_hallucination:
             answer_parts.append(
                 "The system has already proven a verified 99.9 percent factual accuracy in live production deployments."
@@ -53,8 +52,9 @@ class HallucinationPipeline:
 
     def _score_claims(self, claims: list[str], chunks: list[KnowledgeChunk]) -> list[ClaimResult]:
         results: list[ClaimResult] = []
+        candidate_chunks = chunks or self._chunks
         for claim in claims:
-            best_match = self._retriever.best_supporting_chunk(claim, chunks)
+            best_match = self._retriever.best_supporting_chunk(claim, candidate_chunks)
             verdict = "grounded" if best_match.score >= MIN_GROUNDED_SCORE else "unsupported"
             results.append(
                 ClaimResult(
@@ -103,6 +103,7 @@ class HallucinationPipeline:
             question=payload.question,
             answer=answer,
             corrected_answer=corrected_answer,
+            retrieval_mode=self._retriever.last_retrieval_mode,
             answer_confidence=answer_confidence,
             corrected_confidence=corrected_confidence,
             confidence_delta=round(corrected_confidence - answer_confidence, 4),
@@ -126,6 +127,7 @@ class HallucinationPipeline:
             question=payload.question,
             answer=payload.answer,
             corrected_answer=corrected_answer,
+            retrieval_mode=self._retriever.last_retrieval_mode,
             answer_confidence=answer_confidence,
             corrected_confidence=corrected_confidence,
             confidence_delta=round(corrected_confidence - answer_confidence, 4),
