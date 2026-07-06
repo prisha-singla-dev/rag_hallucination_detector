@@ -36,6 +36,7 @@ Notes:
 
 - The code uses lexical retrieval by default so the MVP stays runnable on a clean machine.
 - Set `ENABLE_SENTENCE_TRANSFORMERS=1` later when your local Python environment is ready for embedding models.
+- Set `RETRIEVAL_MODE=faiss` to use FAISS-backed embedding retrieval, or `RETRIEVAL_MODE=embedding` to compare direct embedding ranking without FAISS.
 
 ## Project Structure
 
@@ -67,6 +68,7 @@ Output:
   "question": "...",
   "answer": "...",
   "corrected_answer": "...",
+  "retrieval_mode": "lexical",
   "answer_confidence": 0.52,
   "corrected_confidence": 0.71,
   "confidence_delta": 0.19,
@@ -132,6 +134,12 @@ uvicorn backend.app:app --reload --port 8001
 ### 4. Open the app
 
 Open [http://127.0.0.1:8001](http://127.0.0.1:8001)
+
+### 5. Run tests
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py" -v
+```
 
 ## Near-Term Goal
 
