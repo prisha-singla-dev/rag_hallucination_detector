@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -35,7 +36,17 @@ class ClaimResult(BaseModel):
     evidence: EvidenceChunk
 
 
+class CorrectionStep(BaseModel):
+    original_claim: str
+    action: Literal["kept", "replaced", "removed"]
+    rewritten_claim: str | None = None
+    reason: str
+    evidence: EvidenceChunk | None = None
+
+
 class BaseDetectionResponse(BaseModel):
+    run_id: str
+    created_at: datetime
     question: str
     answer: str
     corrected_answer: str
@@ -44,7 +55,10 @@ class BaseDetectionResponse(BaseModel):
     corrected_confidence: float
     confidence_delta: float
     hallucination_score: float
+    grounded_claim_count: int
+    unsupported_claim_count: int
     claims: list[ClaimResult]
+    correction_steps: list[CorrectionStep]
     retrieved_chunks: list[EvidenceChunk]
 
 
@@ -54,3 +68,29 @@ class QueryResponse(BaseDetectionResponse):
 
 class DetectResponse(BaseDetectionResponse):
     pass
+
+
+class RunRecord(BaseModel):
+    run_id: str
+    created_at: datetime
+    mode: Literal["query", "detect"]
+    question: str
+    hallucination_score: float
+    answer_confidence: float
+    corrected_confidence: float
+    unsupported_claim_count: int
+    retrieval_mode: str
+
+
+class RunHistoryResponse(BaseModel):
+    total_runs: int
+    runs: list[RunRecord]
+
+
+class AnalyticsSummaryResponse(BaseModel):
+    total_runs: int
+    query_runs: int
+    detect_runs: int
+    avg_hallucination_score: float
+    avg_confidence_delta: float
+    latest_run: RunRecord | None

@@ -13,6 +13,8 @@ INTRO_PREFIXES = (
     "the retrieved evidence suggests that",
     "the evidence shows that",
     "the evidence suggests that",
+    "it also shows that",
+    "it also suggests that",
     "overall,",
 )
 
