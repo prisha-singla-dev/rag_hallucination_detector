@@ -1,14 +1,22 @@
 [
   {
-    "label": "Why do RAG systems hallucinate?",
-    "question": "Why do RAG systems hallucinate even when retrieval is enabled?"
+    "label": "SSO and plans",
+    "question": "Which HelixCloud plans support single sign-on, and is email login still available?"
   },
   {
-    "label": "How should unsupported claims be handled?",
-    "question": "How can a RAG system detect unsupported claims and correct them before the answer is returned?"
+    "label": "Audit logs",
+    "question": "What events appear in HelixCloud audit logs and how long are those logs retained?"
   },
   {
-    "label": "What should the API return?",
-    "question": "What fields should a production hallucination detection API return?"
+    "label": "API limits",
+    "question": "What happens if a workspace token exceeds the HelixCloud API rate limit?"
+  },
+  {
+    "label": "Retention and deletion",
+    "question": "How long can deleted documents be recovered in HelixCloud, and which plan supports workspace retention rules?"
+  },
+  {
+    "label": "Streaming safeguards",
+    "question": "When does HelixCloud disable streaming responses, and why?"
   }
 ]

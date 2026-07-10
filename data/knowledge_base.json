@@ -1,32 +1,92 @@
 [
   {
-    "title": "RAG Hallucination Failure Mode",
-    "source": "internal-note://rag-reliability-01",
-    "text": "Hallucinations in retrieval-augmented generation often happen when the model answers beyond the retrieved evidence or when retrieval misses the necessary chunk entirely."
+    "title": "Workspace Overview",
+    "source": "helixcloud://docs/overview",
+    "text": "HelixCloud is a workspace platform for internal knowledge search, document chat, and agent-assisted support workflows."
   },
   {
-    "title": "Grounding Strategy",
-    "source": "internal-note://rag-reliability-02",
-    "text": "A practical mitigation is to score each answer sentence against the retrieved context and mark unsupported claims before returning the final response."
+    "title": "Supported Regions",
+    "source": "helixcloud://docs/regions",
+    "text": "HelixCloud data residency is available in the United States, Germany, and Singapore for enterprise workspaces."
   },
   {
-    "title": "Auto-correction Loop",
-    "source": "internal-note://rag-reliability-03",
-    "text": "Auto-correction can re-query on unsupported claims, pull tighter evidence, and regenerate a shorter answer constrained to grounded chunks."
+    "title": "Authentication",
+    "source": "helixcloud://docs/authentication",
+    "text": "Single sign-on with SAML is available on the Growth and Enterprise plans. Email and password login is available on every plan."
   },
   {
-    "title": "Confidence API",
-    "source": "internal-note://rag-reliability-04",
-    "text": "A production API should return the answer, a hallucination score, evidence used, claim-level verdicts, and a corrected answer when risk is high."
+    "title": "Role Permissions",
+    "source": "helixcloud://docs/roles",
+    "text": "Workspace owners can manage billing, security settings, and data retention. Admins can manage members and content sources, while analysts can run searches and export reports."
   },
   {
-    "title": "Dashboard Value",
-    "source": "internal-note://rag-reliability-05",
-    "text": "A dashboard becomes persuasive when it highlights unsupported claims in red, shows the evidence source, and compares confidence before and after correction."
+    "title": "Audit Logs",
+    "source": "helixcloud://docs/audit-logs",
+    "text": "Enterprise workspaces include audit logs for sign-in activity, source sync events, role changes, and report exports. Audit events are retained for 90 days."
   },
   {
-    "title": "Free MVP Constraint",
-    "source": "internal-note://project-constraint-01",
-    "text": "A free MVP can use FastAPI, Streamlit, sentence-transformers, and FAISS locally without paying for hosted vector databases or proprietary language models."
+    "title": "Source Sync",
+    "source": "helixcloud://docs/source-sync",
+    "text": "Connected knowledge sources are re-indexed every 30 minutes on the Growth plan and every 5 minutes on the Enterprise plan."
+  },
+  {
+    "title": "File Upload Limits",
+    "source": "helixcloud://docs/uploads",
+    "text": "HelixCloud supports PDF, DOCX, CSV, and TXT uploads up to 50 megabytes per file."
+  },
+  {
+    "title": "API Rate Limits",
+    "source": "helixcloud://docs/api-limits",
+    "text": "The public API allows 120 requests per minute per workspace token. Burst traffic above that limit receives HTTP 429 responses."
+  },
+  {
+    "title": "Webhook Delivery",
+    "source": "helixcloud://docs/webhooks",
+    "text": "Webhook notifications are retried up to five times with exponential backoff when a delivery endpoint returns a non-2xx response."
+  },
+  {
+    "title": "Data Retention",
+    "source": "helixcloud://docs/retention",
+    "text": "Deleted documents remain recoverable for 14 days before permanent removal. Workspace-level retention rules are available only on the Enterprise plan."
+  },
+  {
+    "title": "Model Support",
+    "source": "helixcloud://docs/models",
+    "text": "Search answer generation supports GPT-4.1 mini, GPT-4.1, and locally hosted sentence-transformer rerankers."
+  },
+  {
+    "title": "Streaming Responses",
+    "source": "helixcloud://docs/streaming",
+    "text": "Answer streaming is supported in the web app and the public API. Streaming is disabled automatically when a workspace enforces manual review mode."
+  },
+  {
+    "title": "Manual Review Mode",
+    "source": "helixcloud://docs/manual-review",
+    "text": "Manual review mode requires human approval before generated answers are shown to end users. It is designed for regulated support and legal review workflows."
+  },
+  {
+    "title": "Pricing Plans",
+    "source": "helixcloud://docs/pricing",
+    "text": "The Starter plan includes up to 3 members, the Growth plan includes up to 25 members, and the Enterprise plan supports unlimited members with annual billing."
+  },
+  {
+    "title": "Support Coverage",
+    "source": "helixcloud://docs/support",
+    "text": "Growth customers receive email support during business hours. Enterprise customers receive priority support with a four-hour first-response target."
+  },
+  {
+    "title": "Security Certifications",
+    "source": "helixcloud://docs/security",
+    "text": "HelixCloud is SOC 2 Type II certified and encrypts data in transit and at rest."
+  },
+  {
+    "title": "Sandbox Environments",
+    "source": "helixcloud://docs/sandbox",
+    "text": "Enterprise workspaces can create one sandbox environment per production workspace for testing retrieval settings and prompt changes."
+  },
+  {
+    "title": "Analytics Exports",
+    "source": "helixcloud://docs/analytics",
+    "text": "Search analytics can be exported as CSV from the web app. Scheduled exports are available only on the Enterprise plan."
   }
 ]
