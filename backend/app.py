@@ -7,7 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from backend.core.pipeline import HallucinationPipeline
-from backend.core.schemas import DetectRequest, DetectResponse, QueryRequest, QueryResponse
+from backend.core.schemas import (
+    AnalyticsSummaryResponse,
+    DetectRequest,
+    DetectResponse,
+    QueryRequest,
+    QueryResponse,
+    RunHistoryResponse,
+)
 
 
 app = FastAPI(
@@ -54,3 +61,13 @@ def query(payload: QueryRequest) -> QueryResponse:
 @app.post("/detect", response_model=DetectResponse)
 def detect(payload: DetectRequest) -> DetectResponse:
     return pipeline.run_detection(payload)
+
+
+@app.get("/runs/recent", response_model=RunHistoryResponse)
+def recent_runs(limit: int = 8) -> RunHistoryResponse:
+    return pipeline.recent_runs(limit=limit)
+
+
+@app.get("/analytics/summary", response_model=AnalyticsSummaryResponse)
+def analytics_summary() -> AnalyticsSummaryResponse:
+    return pipeline.analytics_summary()
