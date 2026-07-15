@@ -6,83 +6,106 @@
     <title>RAG Hallucination Detector</title>
     <style>
       :root {
-        --bg: #f4f7fb;
-        --panel: #ffffff;
-        --panel-soft: #f8fafc;
-        --ink: #101828;
-        --muted: #475467;
-        --line: #d0d5dd;
-        --accent: #0f766e;
-        --accent-strong: #115e59;
-        --danger: #b42318;
-        --danger-soft: #fef3f2;
-        --success: #027a48;
-        --success-soft: #ecfdf3;
-        --warning: #b54708;
-        --warning-soft: #fffaeb;
-        --shadow: 0 20px 40px rgba(16, 24, 40, 0.08);
-        --radius: 8px;
+        color-scheme: dark;
+        --bg: #07111f;
+        --bg-elevated: #0d1728;
+        --panel: rgba(10, 18, 33, 0.88);
+        --panel-strong: #0d1728;
+        --panel-soft: #121f34;
+        --line: rgba(148, 163, 184, 0.18);
+        --line-strong: rgba(148, 163, 184, 0.28);
+        --text: #f8fafc;
+        --muted: #94a3b8;
+        --accent: #22c55e;
+        --accent-soft: rgba(34, 197, 94, 0.12);
+        --cyan: #22d3ee;
+        --cyan-soft: rgba(34, 211, 238, 0.12);
+        --danger: #fb7185;
+        --danger-soft: rgba(251, 113, 133, 0.12);
+        --warning: #f59e0b;
+        --warning-soft: rgba(245, 158, 11, 0.12);
+        --shadow: 0 24px 80px rgba(2, 6, 23, 0.45);
+        --radius: 10px;
       }
 
       * {
         box-sizing: border-box;
       }
 
+      html {
+        background:
+          radial-gradient(circle at top, rgba(34, 211, 238, 0.1), transparent 28%),
+          radial-gradient(circle at right top, rgba(34, 197, 94, 0.08), transparent 20%),
+          var(--bg);
+      }
+
       body {
         margin: 0;
+        min-height: 100vh;
         font-family: Inter, "Segoe UI", Arial, sans-serif;
-        background: var(--bg);
-        color: var(--ink);
+        background: transparent;
+        color: var(--text);
       }
 
       button,
       textarea,
-      select {
+      select,
+      input {
         font: inherit;
+      }
+
+      code,
+      .mono,
+      .metric-value,
+      .pill,
+      .trace-meta,
+      .list-meta,
+      .panel-kicker {
+        font-family: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
       }
 
       .topbar {
         position: sticky;
         top: 0;
-        z-index: 20;
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(12px);
+        z-index: 30;
+        backdrop-filter: blur(18px);
+        background: rgba(7, 17, 31, 0.78);
         border-bottom: 1px solid var(--line);
       }
 
-      .shell,
+      .topbar-inner,
+      .workspace,
       .footer {
-        width: min(1360px, calc(100vw - 32px));
+        width: min(1440px, calc(100vw - 32px));
         margin: 0 auto;
       }
 
       .topbar-inner {
-        width: min(1360px, calc(100vw - 32px));
-        margin: 0 auto;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 16px;
-        padding: 16px 0;
+        gap: 20px;
+        padding: 18px 0;
       }
 
       .brand {
         display: grid;
-        gap: 4px;
+        gap: 8px;
       }
 
       .brand h1 {
         margin: 0;
-        font-size: 24px;
-        font-weight: 700;
+        font-size: clamp(28px, 3vw, 40px);
+        line-height: 1;
+        letter-spacing: 0;
       }
 
       .brand p,
-      .section-copy,
+      .panel-copy,
       .helper,
+      .list-meta,
       .footer,
-      .empty,
-      .meta {
+      .empty-state {
         margin: 0;
         color: var(--muted);
       }
@@ -90,44 +113,46 @@
       .topbar-actions {
         display: flex;
         gap: 12px;
-        align-items: center;
         flex-wrap: wrap;
+        justify-content: flex-end;
       }
 
       .pill {
         display: inline-flex;
         align-items: center;
-        gap: 8px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        background: #fff;
-        padding: 8px 12px;
+        gap: 10px;
         min-height: 38px;
-        font-size: 14px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(15, 23, 42, 0.8);
+        color: var(--muted);
+        font-size: 12px;
       }
 
-      .dot {
+      .status-dot {
         width: 10px;
         height: 10px;
         border-radius: 999px;
-        background: #98a2b3;
+        background: #64748b;
       }
 
-      .dot.live {
-        background: var(--success);
+      .status-dot.live {
+        background: var(--accent);
+        box-shadow: 0 0 12px rgba(34, 197, 94, 0.7);
       }
 
-      .shell {
+      .workspace {
         display: grid;
         grid-template-columns: minmax(320px, 430px) minmax(0, 1fr);
-        gap: 20px;
-        padding: 24px 0 28px;
+        gap: 18px;
+        padding: 26px 0 28px;
       }
 
       .surface {
-        background: var(--panel);
-        border: 1px solid rgba(16, 24, 40, 0.08);
+        border: 1px solid var(--line);
         border-radius: var(--radius);
+        background: linear-gradient(180deg, rgba(12, 23, 41, 0.95), rgba(8, 15, 29, 0.98));
         box-shadow: var(--shadow);
       }
 
@@ -139,40 +164,46 @@
       .panel-head,
       .section-head {
         display: grid;
-        gap: 6px;
+        gap: 8px;
         margin-bottom: 18px;
       }
 
+      .panel-kicker {
+        color: var(--cyan);
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+
       h2,
-      h3 {
+      h3,
+      h4 {
         margin: 0;
       }
 
-      .segment {
+      .mode-switch {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 4px;
         padding: 4px;
-        border: 1px solid var(--line);
         border-radius: 10px;
-        background: var(--panel-soft);
+        background: var(--bg-elevated);
+        border: 1px solid var(--line);
       }
 
-      .segment button {
+      .mode-switch button {
+        min-height: 44px;
         border: 0;
         border-radius: 8px;
         background: transparent;
         color: var(--muted);
-        min-height: 42px;
-        padding: 10px 12px;
         cursor: pointer;
         font-weight: 600;
       }
 
-      .segment button.active {
-        background: #fff;
-        color: var(--ink);
-        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.08);
+      .mode-switch button.active {
+        color: var(--text);
+        background: linear-gradient(180deg, rgba(34, 211, 238, 0.2), rgba(34, 211, 238, 0.06));
+        border: 1px solid rgba(34, 211, 238, 0.2);
       }
 
       .field {
@@ -182,24 +213,26 @@
       }
 
       label {
-        font-size: 14px;
-        font-weight: 600;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #cbd5e1;
       }
 
       textarea,
       select {
         width: 100%;
-        border: 1px solid var(--line);
         border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(2, 6, 23, 0.45);
+        color: var(--text);
         padding: 12px 14px;
-        background: #fff;
-        color: var(--ink);
       }
 
       textarea {
-        min-height: 128px;
         resize: vertical;
-        line-height: 1.5;
+        min-height: 132px;
+        line-height: 1.6;
       }
 
       .field-row {
@@ -208,7 +241,7 @@
         gap: 12px;
       }
 
-      .presets {
+      .preset-list {
         display: flex;
         flex-wrap: wrap;
         gap: 8px;
@@ -217,64 +250,76 @@
 
       .preset {
         border: 1px solid var(--line);
-        background: #fff;
-        color: var(--ink);
+        background: rgba(15, 23, 42, 0.8);
+        color: var(--text);
         border-radius: 999px;
         padding: 8px 12px;
         cursor: pointer;
       }
 
-      .toggle {
+      .toggle-row {
         display: flex;
         justify-content: space-between;
         gap: 16px;
         align-items: center;
         margin-top: 18px;
-        padding: 12px 14px;
-        border: 1px solid var(--line);
+        padding: 14px;
         border-radius: 8px;
-        background: var(--panel-soft);
+        border: 1px solid var(--line);
+        background: rgba(34, 211, 238, 0.05);
       }
 
-      .toggle input {
+      .toggle-row input {
         width: 18px;
         height: 18px;
       }
 
-      .primary {
+      .primary-button {
         width: 100%;
         min-height: 48px;
         margin-top: 20px;
         border: 0;
         border-radius: 8px;
-        background: var(--accent);
-        color: #fff;
-        font-weight: 700;
+        background: linear-gradient(135deg, rgba(34, 211, 238, 0.95), rgba(34, 197, 94, 0.9));
+        color: #04111f;
+        font-weight: 800;
         cursor: pointer;
       }
 
-      .primary:hover {
-        background: var(--accent-strong);
-      }
-
-      .primary:disabled {
-        background: #98a2b3;
+      .primary-button:disabled {
+        opacity: 0.65;
         cursor: wait;
       }
 
       .results {
         display: grid;
-        gap: 20px;
+        gap: 18px;
+      }
+
+      .hero-strip {
+        display: grid;
+        grid-template-columns: 1.45fr 1fr;
+        gap: 18px;
+      }
+
+      .hero-card {
+        padding: 22px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .hero-card h2 {
+        font-size: 24px;
       }
 
       .banner {
         display: none;
+        align-items: start;
         justify-content: space-between;
-        gap: 12px;
-        align-items: center;
+        gap: 16px;
         padding: 14px 16px;
         border-radius: 8px;
-        border: 1px solid transparent;
+        border: 1px solid var(--line);
       }
 
       .banner.show {
@@ -283,80 +328,94 @@
 
       .banner.warning {
         background: var(--warning-soft);
-        border-color: #fedf89;
+        border-color: rgba(245, 158, 11, 0.32);
       }
 
       .banner.success {
-        background: var(--success-soft);
-        border-color: #abefc6;
+        background: var(--accent-soft);
+        border-color: rgba(34, 197, 94, 0.28);
       }
 
-      .metrics {
+      .meta-grid,
+      .metrics-grid,
+      .comparison-grid,
+      .bottom-grid {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 12px;
       }
 
-      .metric {
+      .meta-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .metrics-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .comparison-grid,
+      .bottom-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .metric-card,
+      .meta-card,
+      .response-card,
+      .trace-card,
+      .history-card,
+      .claims-card,
+      .evidence-card {
         border: 1px solid var(--line);
         border-radius: 8px;
-        padding: 16px;
-        background: #fff;
+        background: rgba(9, 16, 30, 0.84);
       }
 
-      .metric .label {
-        font-size: 13px;
+      .meta-card,
+      .metric-card {
+        padding: 14px;
+      }
+
+      .metric-label,
+      .meta-label {
         color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
       }
 
-      .metric .value {
+      .metric-value,
+      .meta-value {
         margin-top: 10px;
         font-size: 28px;
-        font-weight: 700;
+        line-height: 1;
+        color: var(--text);
       }
 
-      .responses {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 16px;
+      .meta-value {
+        font-size: 16px;
       }
 
-      .response-box {
-        min-height: 180px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 16px;
-        background: var(--panel-soft);
+      .response-card,
+      .trace-card,
+      .history-card,
+      .claims-card,
+      .evidence-card {
+        padding: 18px;
       }
 
-      .response-box p,
+      .response-text,
       .claim-text,
+      .trace-text,
       .evidence-text {
         margin: 0;
+        line-height: 1.7;
         white-space: pre-wrap;
-        line-height: 1.6;
       }
 
-      .claims,
-      .evidence {
-        display: grid;
-        gap: 12px;
-      }
-
-      .claim,
-      .evidence-item {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        padding: 14px 16px;
-        background: #fff;
-      }
-
-      .row {
+      .section-title-row {
         display: flex;
+        align-items: center;
         justify-content: space-between;
-        align-items: start;
         gap: 12px;
-        margin-bottom: 10px;
+        margin-bottom: 14px;
       }
 
       .badge {
@@ -365,19 +424,53 @@
         min-height: 28px;
         padding: 0 10px;
         border-radius: 999px;
-        font-size: 12px;
-        font-weight: 700;
+        font-size: 11px;
+        font-weight: 800;
         text-transform: uppercase;
       }
 
       .badge.success {
-        background: var(--success-soft);
-        color: var(--success);
+        background: var(--accent-soft);
+        color: #86efac;
       }
 
       .badge.danger {
         background: var(--danger-soft);
-        color: var(--danger);
+        color: #fda4af;
+      }
+
+      .badge.info {
+        background: var(--cyan-soft);
+        color: #67e8f9;
+      }
+
+      .stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .stack-item {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 14px;
+        background: rgba(7, 12, 23, 0.9);
+      }
+
+      .stack-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .trace-meta,
+      .list-meta {
+        font-size: 12px;
+      }
+
+      .trace-meta {
+        color: #cbd5e1;
       }
 
       .hidden {
@@ -385,33 +478,40 @@
       }
 
       .footer {
-        width: min(1360px, calc(100vw - 32px));
-        padding: 0 0 32px;
-        font-size: 13px;
+        padding: 0 0 30px;
+        font-size: 12px;
       }
 
-      code {
-        background: #e2e8f0;
-        padding: 2px 6px;
-        border-radius: 4px;
-      }
-
-      @media (max-width: 1024px) {
-        .shell {
+      @media (max-width: 1180px) {
+        .workspace,
+        .hero-strip,
+        .comparison-grid,
+        .bottom-grid {
           grid-template-columns: 1fr;
         }
       }
 
-      @media (max-width: 720px) {
+      @media (max-width: 980px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .metrics-grid,
+        .meta-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 680px) {
         .topbar-inner,
-        .shell,
+        .workspace,
         .footer {
-          width: min(100vw - 20px, 1360px);
+          width: min(100vw - 20px, 1440px);
         }
 
         .field-row,
-        .metrics,
-        .responses {
+        .metrics-grid,
+        .meta-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -421,47 +521,45 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div class="brand">
+          <div class="panel-kicker">Reliability Layer / Claim Grounding / Auto-Correction</div>
           <h1>RAG Hallucination Detector</h1>
-          <p>Catch unsupported claims, surface evidence, and auto-correct risky answers.</p>
+          <p>Inspect an answer, pinpoint unsupported claims, and regenerate a tighter grounded response.</p>
         </div>
         <div class="topbar-actions">
-          <div class="pill">
-            <span id="api-dot" class="dot"></span>
-            <span id="api-status">Checking API</span>
-          </div>
-          <div class="pill" id="kb-count">Knowledge base: --</div>
+          <div class="pill"><span id="api-dot" class="status-dot"></span><span id="api-status">Checking API</span></div>
+          <div class="pill" id="kb-pill">Knowledge base: --</div>
+          <div class="pill">Mode: <span id="mode-indicator" class="mono">query</span></div>
         </div>
       </div>
     </header>
 
-    <main class="shell">
+    <main class="workspace">
       <section class="surface panel">
         <div class="panel-head">
-          <h2>Run analysis</h2>
-          <p class="section-copy">
-            Generate an answer and inspect it, or paste an answer you already have and audit it directly.
-          </p>
+          <div class="panel-kicker">Control Panel</div>
+          <h2>Run the pipeline</h2>
+          <p class="panel-copy">Switch between generating an answer and auditing one you already have. The repair loop will try to re-ground unsupported claims before returning a safer answer.</p>
         </div>
 
-        <div class="segment">
+        <div class="mode-switch">
           <button id="query-mode" class="active" type="button">Query Pipeline</button>
           <button id="detect-mode" type="button">Inspect Answer</button>
         </div>
 
         <div class="field">
           <label for="question">Question</label>
-          <textarea id="question">How can a RAG system detect unsupported claims and correct them before the answer is returned?</textarea>
+          <textarea id="question"></textarea>
         </div>
 
         <div class="field hidden" id="answer-field">
           <label for="answer">Answer to inspect</label>
-          <textarea id="answer">A good system should score each sentence against retrieved context, flag unsupported claims, and re-query before regenerating a grounded answer.</textarea>
-          <p class="helper">Only used in inspect mode.</p>
+          <textarea id="answer"></textarea>
+          <p class="helper">Paste an answer that may contain unsupported or overconfident claims.</p>
         </div>
 
         <div class="field-row">
           <div class="field">
-            <label for="preset">Example scenario</label>
+            <label for="preset">Scenario</label>
             <select id="preset"></select>
           </div>
           <div class="field">
@@ -475,83 +573,177 @@
           </div>
         </div>
 
-        <div class="presets" id="preset-chips"></div>
+        <div class="preset-list" id="preset-list"></div>
 
-        <div class="toggle" id="simulate-wrap">
+        <div class="toggle-row" id="simulate-wrap">
           <div>
-            <label for="simulate" style="display: block;">Inject unsupported claim</label>
-            <p class="helper">Useful for a recruiter demo where you want the detector to visibly catch something.</p>
+            <label for="simulate">Inject unsupported claim</label>
+            <p class="helper">Keep this on when you want a visible red flag in a live demo.</p>
           </div>
           <input id="simulate" type="checkbox" checked />
         </div>
 
-        <button id="run" class="primary" type="button">Run analysis</button>
+        <button id="run-button" class="primary-button" type="button">Run analysis</button>
       </section>
 
       <section class="results">
-        <div id="banner" class="banner">
-          <div>
-            <strong id="banner-title">Waiting for input</strong>
-            <p class="section-copy" id="banner-copy">Run the pipeline to see grounded and unsupported claims.</p>
-          </div>
+        <div class="hero-strip">
+          <section class="surface hero-card">
+            <div class="panel-kicker">Run Status</div>
+            <h2 id="hero-title">Ready to inspect a grounded answer path</h2>
+            <p class="panel-copy" id="hero-copy">Pick a scenario, run the pipeline, and compare the original answer with the repaired output.</p>
+            <div id="banner" class="banner">
+              <div>
+                <strong id="banner-title">Waiting for input</strong>
+                <p id="banner-copy" class="panel-copy">No run yet.</p>
+              </div>
+            </div>
+            <div class="meta-grid">
+              <div class="meta-card">
+                <div class="meta-label">Run ID</div>
+                <div class="meta-value mono" id="run-id">--</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Retrieval</div>
+                <div class="meta-value mono" id="retrieval-mode">--</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Timestamp</div>
+                <div class="meta-value mono" id="timestamp-value">--</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="surface section">
+            <div class="section-title-row">
+              <div>
+                <div class="panel-kicker">Analytics</div>
+                <h3>Recent system summary</h3>
+              </div>
+              <span class="badge info" id="analytics-count">0 runs</span>
+            </div>
+            <div class="metrics-grid">
+              <div class="metric-card">
+                <div class="metric-label">Avg hallucination</div>
+                <div class="metric-value" id="avg-risk">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Avg confidence delta</div>
+                <div class="metric-value" id="avg-delta">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Query runs</div>
+                <div class="metric-value" id="query-runs">--</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-label">Detect runs</div>
+                <div class="metric-value" id="detect-runs">--</div>
+              </div>
+            </div>
+          </section>
         </div>
 
         <section class="surface section">
           <div class="section-head">
-            <h2>Risk summary</h2>
-            <p class="section-copy">Confidence before and after correction.</p>
+            <div class="panel-kicker">Risk Metrics</div>
+            <h3>Claim grounding summary</h3>
+            <p class="panel-copy">These metrics are computed from the original answer before the repair loop finishes.</p>
           </div>
-          <div class="metrics">
-            <div class="metric">
-              <div class="label">Hallucination score</div>
-              <div class="value" id="risk-value">--</div>
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-label">Hallucination score</div>
+              <div class="metric-value" id="risk-value">--</div>
             </div>
-            <div class="metric">
-              <div class="label">Answer confidence</div>
-              <div class="value" id="confidence-value">--</div>
+            <div class="metric-card">
+              <div class="metric-label">Answer confidence</div>
+              <div class="metric-value" id="confidence-value">--</div>
             </div>
-            <div class="metric">
-              <div class="label">Confidence delta</div>
-              <div class="value" id="delta-value">--</div>
+            <div class="metric-card">
+              <div class="metric-label">Confidence delta</div>
+              <div class="metric-value" id="delta-value">--</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Unsupported claims</div>
+              <div class="metric-value" id="unsupported-count">--</div>
             </div>
           </div>
         </section>
 
-        <section class="surface section">
-          <div class="section-head">
-            <h2>Response comparison</h2>
-            <p class="section-copy">Original output next to the grounded correction.</p>
-          </div>
-          <div class="responses">
-            <article class="response-box">
-              <h3>Original answer</h3>
-              <p id="original-answer" class="empty">No answer yet.</p>
-            </article>
-            <article class="response-box">
-              <h3>Corrected answer</h3>
-              <p id="corrected-answer" class="empty">No correction yet.</p>
-            </article>
-          </div>
+        <section class="comparison-grid">
+          <article class="surface response-card">
+            <div class="section-title-row">
+              <div>
+                <div class="panel-kicker">Original Output</div>
+                <h3>Before correction</h3>
+              </div>
+            </div>
+            <p id="original-answer" class="response-text empty-state">No answer yet.</p>
+          </article>
+
+          <article class="surface response-card">
+            <div class="section-title-row">
+              <div>
+                <div class="panel-kicker">Corrected Output</div>
+                <h3>After repair</h3>
+              </div>
+            </div>
+            <p id="corrected-answer" class="response-text empty-state">No corrected answer yet.</p>
+          </article>
         </section>
 
-        <section class="surface section">
-          <div class="section-head">
-            <h2>Claim grounding</h2>
-            <p class="section-copy">Each claim is scored against the best supporting evidence chunk.</p>
-          </div>
-          <div id="claims" class="claims">
-            <p class="empty">Claims will appear here after a run.</p>
-          </div>
+        <section class="bottom-grid">
+          <article class="surface trace-card">
+            <div class="section-title-row">
+              <div>
+                <div class="panel-kicker">Repair Trace</div>
+                <h3>Correction steps</h3>
+              </div>
+              <span class="badge info" id="trace-count">0 steps</span>
+            </div>
+            <div id="trace-list" class="stack">
+              <p class="empty-state">Correction steps will appear here after a run.</p>
+            </div>
+          </article>
+
+          <article class="surface claims-card">
+            <div class="section-title-row">
+              <div>
+                <div class="panel-kicker">Claim Verdicts</div>
+                <h3>Grounded vs unsupported</h3>
+              </div>
+              <span class="badge info" id="claim-count">0 claims</span>
+            </div>
+            <div id="claims-list" class="stack">
+              <p class="empty-state">Claim verdicts will appear here after a run.</p>
+            </div>
+          </article>
         </section>
 
-        <section class="surface section">
-          <div class="section-head">
-            <h2>Retrieved evidence</h2>
-            <p class="section-copy">These chunks were used to ground the answer.</p>
-          </div>
-          <div id="evidence" class="evidence">
-            <p class="empty">Evidence will appear here after a run.</p>
-          </div>
+        <section class="bottom-grid">
+          <article class="surface evidence-card">
+            <div class="section-title-row">
+              <div>
+                <div class="panel-kicker">Evidence</div>
+                <h3>Retrieved support set</h3>
+              </div>
+            </div>
+            <div id="evidence-list" class="stack">
+              <p class="empty-state">Evidence chunks will appear here after a run.</p>
+            </div>
+          </article>
+
+          <article class="surface history-card">
+            <div class="section-title-row">
+              <div>
+                <div class="panel-kicker">Recent Runs</div>
+                <h3>Execution history</h3>
+              </div>
+              <span class="badge info" id="history-count">0 runs</span>
+            </div>
+            <div id="history-list" class="stack">
+              <p class="empty-state">Recent runs will appear here after you execute the pipeline.</p>
+            </div>
+          </article>
         </section>
       </section>
     </main>
@@ -563,54 +755,83 @@
     <script>
       const presets = [
         {
-          label: "Why RAG hallucinates",
-          question: "Why do RAG systems hallucinate even when retrieval is enabled?",
-          answer:
-            "RAG systems hallucinate when the model answers beyond the retrieved evidence and when retrieval misses the needed chunk."
+          label: "SSO and plans",
+          question: "Which HelixCloud plans support single sign-on, and is email login still available?",
+          answer: "Single sign-on with SAML is available on the Growth and Enterprise plans. Email and password login is available on every plan."
         },
         {
-          label: "Unsupported claim handling",
-          question: "How can a RAG system detect unsupported claims and correct them before the answer is returned?",
-          answer:
-            "A good system should score each sentence against retrieved context, flag unsupported claims, and re-query before regenerating a grounded answer."
+          label: "Audit logs",
+          question: "What events appear in HelixCloud audit logs and how long are those logs retained?",
+          answer: "Enterprise workspaces include audit logs for sign-in activity, source sync events, role changes, and report exports. Audit events are retained for 90 days."
         },
         {
-          label: "Production API contract",
-          question: "What fields should a production hallucination detection API return?",
-          answer:
-            "It should return the answer, evidence used, claim-level verdicts, a hallucination score, and a corrected answer when the risk is high."
+          label: "API rate limits",
+          question: "What happens if a workspace token exceeds the HelixCloud API rate limit?",
+          answer: "The public API allows 120 requests per minute per workspace token. Burst traffic above that limit receives HTTP 429 responses."
+        },
+        {
+          label: "Retention rules",
+          question: "How long can deleted documents be recovered in HelixCloud, and which plan supports workspace retention rules?",
+          answer: "Deleted documents remain recoverable for 14 days before permanent removal. Workspace-level retention rules are available only on the Enterprise plan."
+        },
+        {
+          label: "Streaming safeguards",
+          question: "When does HelixCloud disable streaming responses, and why?",
+          answer: "Streaming is disabled automatically when a workspace enforces manual review mode because human approval is required before generated answers are shown to end users."
         }
       ];
 
       const queryModeButton = document.getElementById("query-mode");
       const detectModeButton = document.getElementById("detect-mode");
-      const answerField = document.getElementById("answer-field");
-      const simulateWrap = document.getElementById("simulate-wrap");
+      const modeIndicator = document.getElementById("mode-indicator");
       const questionInput = document.getElementById("question");
       const answerInput = document.getElementById("answer");
-      const runButton = document.getElementById("run");
+      const answerField = document.getElementById("answer-field");
+      const runButton = document.getElementById("run-button");
       const presetSelect = document.getElementById("preset");
-      const presetChips = document.getElementById("preset-chips");
+      const presetList = document.getElementById("preset-list");
       const topKSelect = document.getElementById("topk");
       const simulateToggle = document.getElementById("simulate");
+      const simulateWrap = document.getElementById("simulate-wrap");
       const apiDot = document.getElementById("api-dot");
       const apiStatus = document.getElementById("api-status");
-      const kbCount = document.getElementById("kb-count");
+      const kbPill = document.getElementById("kb-pill");
+      const analyticsCount = document.getElementById("analytics-count");
+      const avgRisk = document.getElementById("avg-risk");
+      const avgDelta = document.getElementById("avg-delta");
+      const queryRuns = document.getElementById("query-runs");
+      const detectRuns = document.getElementById("detect-runs");
+      const heroTitle = document.getElementById("hero-title");
+      const heroCopy = document.getElementById("hero-copy");
       const banner = document.getElementById("banner");
       const bannerTitle = document.getElementById("banner-title");
       const bannerCopy = document.getElementById("banner-copy");
+      const runId = document.getElementById("run-id");
+      const retrievalMode = document.getElementById("retrieval-mode");
+      const timestampValue = document.getElementById("timestamp-value");
       const riskValue = document.getElementById("risk-value");
       const confidenceValue = document.getElementById("confidence-value");
       const deltaValue = document.getElementById("delta-value");
+      const unsupportedCount = document.getElementById("unsupported-count");
       const originalAnswer = document.getElementById("original-answer");
       const correctedAnswer = document.getElementById("corrected-answer");
-      const claims = document.getElementById("claims");
-      const evidence = document.getElementById("evidence");
+      const traceList = document.getElementById("trace-list");
+      const claimsList = document.getElementById("claims-list");
+      const evidenceList = document.getElementById("evidence-list");
+      const historyList = document.getElementById("history-list");
+      const traceCount = document.getElementById("trace-count");
+      const claimCount = document.getElementById("claim-count");
+      const historyCount = document.getElementById("history-count");
 
       let mode = "query";
 
       function formatNumber(value) {
         return typeof value === "number" ? value.toFixed(2) : "--";
+      }
+
+      function formatDate(value) {
+        if (!value) return "--";
+        return new Date(value).toLocaleString();
       }
 
       function setMode(nextMode) {
@@ -620,17 +841,14 @@
         detectModeButton.classList.toggle("active", !isQuery);
         answerField.classList.toggle("hidden", isQuery);
         simulateWrap.classList.toggle("hidden", !isQuery);
+        modeIndicator.textContent = nextMode;
         runButton.textContent = isQuery ? "Run analysis" : "Inspect answer";
       }
 
-      function applyPreset(index) {
-        const preset = presets[index];
-        presetSelect.value = String(index);
-        questionInput.value = preset.question;
-        answerInput.value = preset.answer;
-      }
-
       function populatePresets() {
+        presetSelect.innerHTML = "";
+        presetList.innerHTML = "";
+
         presets.forEach((preset, index) => {
           const option = document.createElement("option");
           option.value = String(index);
@@ -642,67 +860,21 @@
           chip.className = "preset";
           chip.textContent = preset.label;
           chip.addEventListener("click", () => applyPreset(index));
-          presetChips.appendChild(chip);
+          presetList.appendChild(chip);
         });
+      }
+
+      function applyPreset(index) {
+        const preset = presets[index];
+        presetSelect.value = String(index);
+        questionInput.value = preset.question;
+        answerInput.value = preset.answer;
       }
 
       function setBanner(kind, title, copy) {
         banner.className = `banner show ${kind}`;
         bannerTitle.textContent = title;
         bannerCopy.textContent = copy;
-      }
-
-      function renderClaims(items) {
-        claims.innerHTML = "";
-        if (!items.length) {
-          claims.innerHTML = '<p class="empty">No claims were returned.</p>';
-          return 0;
-        }
-
-        let unsupportedCount = 0;
-
-        items.forEach((item) => {
-          const unsupported = item.verdict === "unsupported";
-          if (unsupported) {
-            unsupportedCount += 1;
-          }
-
-          const node = document.createElement("article");
-          node.className = "claim";
-          node.innerHTML = `
-            <div class="row">
-              <strong>${item.evidence.title}</strong>
-              <span class="badge ${unsupported ? "danger" : "success"}">${item.verdict}</span>
-            </div>
-            <p class="claim-text">${item.claim}</p>
-            <p class="meta">Support score: ${formatNumber(item.support_score)} | Source: ${item.evidence.source}</p>
-          `;
-          claims.appendChild(node);
-        });
-
-        return unsupportedCount;
-      }
-
-      function renderEvidence(items) {
-        evidence.innerHTML = "";
-        if (!items.length) {
-          evidence.innerHTML = '<p class="empty">No evidence chunks were returned.</p>';
-          return;
-        }
-
-        items.forEach((item) => {
-          const node = document.createElement("article");
-          node.className = "evidence-item";
-          node.innerHTML = `
-            <div class="row">
-              <strong>${item.title}</strong>
-              <span class="badge success">score ${formatNumber(item.score)}</span>
-            </div>
-            <p class="evidence-text">${item.text}</p>
-            <p class="meta">${item.source}</p>
-          `;
-          evidence.appendChild(node);
-        });
       }
 
       function setLoading(loading) {
@@ -714,7 +886,7 @@
         }
       }
 
-      async function getJson(url, options) {
+      async function fetchJson(url, options) {
         const response = await fetch(url, options);
         if (!response.ok) {
           const text = await response.text();
@@ -723,20 +895,148 @@
         return response.json();
       }
 
-      async function bootstrap() {
+      async function refreshSystemSummary() {
         try {
-          const health = await getJson("/health");
-          const kb = await getJson("/knowledge-base");
+          const [health, kb, analytics, recent] = await Promise.all([
+            fetchJson("/health"),
+            fetchJson("/knowledge-base"),
+            fetchJson("/analytics/summary"),
+            fetchJson("/runs/recent?limit=6")
+          ]);
+
           if (health.status === "ok") {
             apiDot.classList.add("live");
             apiStatus.textContent = "API live";
           }
-          kbCount.textContent = `Knowledge base: ${kb.document_count} chunks`;
+
+          kbPill.textContent = `Knowledge base: ${kb.document_count} chunks`;
+          renderAnalytics(analytics);
+          renderHistory(recent.runs || [], recent.total_runs || 0);
         } catch (error) {
           apiDot.classList.remove("live");
           apiStatus.textContent = "API unavailable";
-          kbCount.textContent = "Knowledge base: unavailable";
+          kbPill.textContent = "Knowledge base: unavailable";
         }
+      }
+
+      function renderAnalytics(analytics) {
+        analyticsCount.textContent = `${analytics.total_runs} runs`;
+        avgRisk.textContent = formatNumber(analytics.avg_hallucination_score);
+        avgDelta.textContent = formatNumber(analytics.avg_confidence_delta);
+        queryRuns.textContent = analytics.query_runs ?? 0;
+        detectRuns.textContent = analytics.detect_runs ?? 0;
+      }
+
+      function renderHistory(runs, totalRuns) {
+        historyCount.textContent = `${totalRuns} runs`;
+        historyList.innerHTML = "";
+
+        if (!runs.length) {
+          historyList.innerHTML = '<p class="empty-state">Run the system once to start building history.</p>';
+          return;
+        }
+
+        runs.forEach((run) => {
+          const item = document.createElement("article");
+          item.className = "stack-item";
+          item.innerHTML = `
+            <div class="stack-head">
+              <div>
+                <strong>${run.question}</strong>
+                <p class="list-meta">${formatDate(run.created_at)}</p>
+              </div>
+              <span class="badge info">${run.mode}</span>
+            </div>
+            <div class="trace-meta">risk ${formatNumber(run.hallucination_score)} | unsupported ${run.unsupported_claim_count} | retrieval ${run.retrieval_mode}</div>
+          `;
+          historyList.appendChild(item);
+        });
+      }
+
+      function renderClaimResults(items) {
+        claimCount.textContent = `${items.length} claims`;
+        claimsList.innerHTML = "";
+
+        if (!items.length) {
+          claimsList.innerHTML = '<p class="empty-state">No claim verdicts returned.</p>';
+          return 0;
+        }
+
+        let unsupported = 0;
+
+        items.forEach((item) => {
+          if (item.verdict === "unsupported") unsupported += 1;
+
+          const card = document.createElement("article");
+          card.className = "stack-item";
+          card.innerHTML = `
+            <div class="stack-head">
+              <div>
+                <strong>${item.evidence.title}</strong>
+                <p class="list-meta">${item.evidence.source}</p>
+              </div>
+              <span class="badge ${item.verdict === "unsupported" ? "danger" : "success"}">${item.verdict}</span>
+            </div>
+            <p class="claim-text">${item.claim}</p>
+            <div class="trace-meta">support ${formatNumber(item.support_score)}</div>
+          `;
+          claimsList.appendChild(card);
+        });
+
+        return unsupported;
+      }
+
+      function renderCorrectionSteps(steps) {
+        traceCount.textContent = `${steps.length} steps`;
+        traceList.innerHTML = "";
+
+        if (!steps.length) {
+          traceList.innerHTML = '<p class="empty-state">No correction steps returned.</p>';
+          return;
+        }
+
+        steps.forEach((step) => {
+          const card = document.createElement("article");
+          card.className = "stack-item";
+          const evidenceLabel = step.evidence ? `${step.evidence.title} | ${step.evidence.source}` : "No supporting evidence retained";
+          card.innerHTML = `
+            <div class="stack-head">
+              <div>
+                <strong>${step.original_claim}</strong>
+                <p class="list-meta">${step.reason}</p>
+              </div>
+              <span class="badge ${step.action === "removed" ? "danger" : step.action === "replaced" ? "info" : "success"}">${step.action}</span>
+            </div>
+            ${step.rewritten_claim ? `<p class="trace-text">${step.rewritten_claim}</p>` : ""}
+            <div class="trace-meta">${evidenceLabel}</div>
+          `;
+          traceList.appendChild(card);
+        });
+      }
+
+      function renderEvidence(items) {
+        evidenceList.innerHTML = "";
+
+        if (!items.length) {
+          evidenceList.innerHTML = '<p class="empty-state">No evidence returned.</p>';
+          return;
+        }
+
+        items.forEach((item) => {
+          const card = document.createElement("article");
+          card.className = "stack-item";
+          card.innerHTML = `
+            <div class="stack-head">
+              <div>
+                <strong>${item.title}</strong>
+                <p class="list-meta">${item.source}</p>
+              </div>
+              <span class="badge info">score ${formatNumber(item.score)}</span>
+            </div>
+            <p class="evidence-text">${item.text}</p>
+          `;
+          evidenceList.appendChild(card);
+        });
       }
 
       async function runAnalysis() {
@@ -759,7 +1059,7 @@
             };
 
         if (mode === "detect" && !payload.answer) {
-          setBanner("warning", "Answer required", "Paste an answer to inspect when using detect mode.");
+          setBanner("warning", "Answer required", "Paste an answer before using inspect mode.");
           return;
         }
 
@@ -767,34 +1067,44 @@
 
         try {
           const endpoint = mode === "query" ? "/query" : "/detect";
-          const result = await getJson(endpoint, {
+          const result = await fetchJson(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
           });
 
+          heroTitle.textContent = "Pipeline run completed";
+          heroCopy.textContent = "The model answer was scored, the unsupported claims were repaired where possible, and the result set below was refreshed.";
+
+          runId.textContent = result.run_id;
+          retrievalMode.textContent = result.retrieval_mode;
+          timestampValue.textContent = formatDate(result.created_at);
           riskValue.textContent = formatNumber(result.hallucination_score);
           confidenceValue.textContent = formatNumber(result.answer_confidence);
           deltaValue.textContent = formatNumber(result.confidence_delta);
+          unsupportedCount.textContent = result.unsupported_claim_count;
           originalAnswer.textContent = result.answer;
           correctedAnswer.textContent = result.corrected_answer;
 
-          const unsupportedCount = renderClaims(result.claims);
+          const unsupported = renderClaimResults(result.claims);
+          renderCorrectionSteps(result.correction_steps);
           renderEvidence(result.retrieved_chunks);
 
-          if (unsupportedCount > 0) {
+          if (unsupported > 0) {
             setBanner(
               "warning",
-              `${unsupportedCount} unsupported claim${unsupportedCount > 1 ? "s" : ""} detected`,
-              "The detector flagged claims that were not well grounded in retrieved evidence and generated a safer correction."
+              `${unsupported} unsupported claim${unsupported > 1 ? "s" : ""} detected`,
+              "The repair loop re-queried those claims and either replaced them with grounded evidence or removed them."
             );
           } else {
             setBanner(
               "success",
               "All visible claims look grounded",
-              "The answer stayed within the retrieved context, so the correction path did not need to remove risky claims."
+              "The answer stayed within the evidence set, so no risky claim needed to be rewritten."
             );
           }
+
+          await refreshSystemSummary();
         } catch (error) {
           setBanner("warning", "Request failed", error.message || "The API request could not be completed.");
         } finally {
@@ -808,9 +1118,9 @@
       runButton.addEventListener("click", runAnalysis);
 
       populatePresets();
-      applyPreset(1);
+      applyPreset(0);
       setMode("query");
-      bootstrap();
+      refreshSystemSummary();
     </script>
   </body>
 </html>
