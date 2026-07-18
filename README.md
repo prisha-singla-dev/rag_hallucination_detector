@@ -2,6 +2,39 @@
 
 Free MVP for catching unsupported claims in a retrieval-augmented generation pipeline, then rewriting the answer so it stays grounded in retrieved evidence.
 
+## Delivery Phases
+
+### Phase 1: Backend intelligence
+
+- claim extraction
+- lexical retrieval
+- embedding-ready retrieval
+- FAISS retrieval mode
+- claim-level support scoring
+- repair loop for unsupported claims
+- run history and analytics endpoints
+
+### Phase 2: Demo data
+
+- realistic product-doc knowledge base
+- believable questions
+- visible hallucination and correction cases
+
+### Phase 3: Frontend experience
+
+- dark product-style interface
+- query and inspect modes
+- correction trace
+- evidence review
+- recent runs analytics
+
+### Phase 4: Hardening and deployment
+
+- tests
+- docs
+- Docker path
+- Render config
+
 ## MVP Scope
 
 This repo is optimized for a no-cost demo between July 15 and July 20.
@@ -13,7 +46,7 @@ What the MVP does:
 - splits the answer into sentence-level claims
 - scores each claim against evidence
 - flags unsupported claims
-- auto-corrects the answer by removing unsupported content
+- auto-corrects unsupported claims by re-querying and rewriting toward stronger evidence
 - shows hallucination risk, confidence, evidence, and correction in a custom frontend
 
 What we are intentionally not doing in the first ship:
@@ -32,6 +65,10 @@ What we are intentionally not doing in the first ship:
 - FAISS
 - LangChain
 
+## Current Demo Domain
+
+The project currently uses a fictional but realistic product-doc knowledge base for `HelixCloud`, a workspace platform for search, document chat, and support workflows.
+
 Notes:
 
 - The code uses lexical retrieval by default so the MVP stays runnable on a clean machine.
@@ -41,11 +78,13 @@ Notes:
 ## Project Structure
 
 - [backend/app.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/app.py): FastAPI app, API routes, and frontend entry route
+- [backend/core/claim_extractor.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/core/claim_extractor.py): claim splitting and normalization
 - [backend/core/pipeline.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/core/pipeline.py): query, claim scoring, and auto-correction flow
 - [backend/core/retriever.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/core/retriever.py): local retrieval with embedding fallback
 - [frontend/index.html](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/frontend/index.html): primary demo UI served by FastAPI
 - [data/knowledge_base.json](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/data/knowledge_base.json): seed knowledge base for local testing
 - [data/sample_queries.json](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/data/sample_queries.json): sample scenarios for future expansion
+- [tests/test_pipeline.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/tests/test_pipeline.py): regression tests for the pipeline
 
 ## API Contract
 
@@ -65,6 +104,7 @@ Output:
 
 ```json
 {
+  "run_id": "run-12345",
   "question": "...",
   "answer": "...",
   "corrected_answer": "...",
@@ -73,7 +113,10 @@ Output:
   "corrected_confidence": 0.71,
   "confidence_delta": 0.19,
   "hallucination_score": 0.33,
+  "grounded_claim_count": 2,
+  "unsupported_claim_count": 1,
   "claims": [],
+  "correction_steps": [],
   "retrieved_chunks": []
 }
 ```
@@ -82,9 +125,117 @@ Output:
 
 Use this when you already have an answer and want claim-level grounding plus correction.
 
+### `GET /runs/recent`
+
+Returns recent query and detect runs for the dashboard history panel.
+
+### `GET /analytics/summary`
+
+Returns aggregate run counts plus average hallucination and confidence-delta metrics.
+
 ## UI Flow
 
 - `GET /`: opens the main product-style demo UI
 - query mode: generate an answer, score claims, and show auto-correction
 - inspect mode: paste an answer you already have and audit it directly
+- analytics view: inspect recent runs and average risk trends
 
+## Suggested Daily Commits
+
+### Day 1
+
+- backend repair loop
+- correction trace objects
+- richer API response fields
+
+Commit:
+
+`feat: add re-query based repair loop and correction trace`
+
+### Day 2
+
+- realistic HelixCloud knowledge base
+- stronger sample scenarios
+- domain-aligned query presets
+
+Commit:
+
+`feat: add realistic HelixCloud knowledge base and demo scenarios`
+
+### Day 3
+
+- recent runs
+- analytics summary
+- pipeline verification
+
+Commit:
+
+`feat: add run analytics and recent execution history`
+
+### Day 4
+
+- dark product-style frontend redesign
+- evidence and claim review workflow
+- recent runs panel
+
+Commit:
+
+`feat: redesign frontend into a product-style review experience`
+
+### Day 5
+
+- cleanup
+- tests
+- edge-case fixes
+
+Commit:
+
+`fix: harden correction flow and add regression coverage`
+
+### Day 6
+
+- Dockerfile
+- Render config
+- README final pass
+
+Commit:
+
+`chore: add deployment config and final project documentation`
+
+## Local Run
+
+### 1. Create a virtual environment
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+### 2. Install dependencies
+
+```powershell
+pip install -r requirements.txt
+```
+
+### 3. Start the API
+
+```powershell
+uvicorn backend.app:app --reload --port 8001
+```
+
+### 4. Open the app
+
+Open [http://127.0.0.1:8001](http://127.0.0.1:8001)
+
+### 5. Run tests
+
+```powershell
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+### 6. Run with Docker
+
+```powershell
+docker build -t rag-hallucination-detector .
+docker run -p 8000:8000 rag-hallucination-detector
+```
