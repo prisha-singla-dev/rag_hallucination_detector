@@ -1,11 +1,9 @@
 # RAG Hallucination Detector & Auto-Corrector
-
 Free MVP for catching unsupported claims in a retrieval-augmented generation pipeline, then rewriting the answer so it stays grounded in retrieved evidence.
 
 ## Delivery Phases
 
 ### Phase 1: Backend intelligence
-
 - claim extraction
 - lexical retrieval
 - embedding-ready retrieval
@@ -140,67 +138,6 @@ Returns aggregate run counts plus average hallucination and confidence-delta met
 - inspect mode: paste an answer you already have and audit it directly
 - analytics view: inspect recent runs and average risk trends
 
-## Suggested Daily Commits
-
-### Day 1
-
-- backend repair loop
-- correction trace objects
-- richer API response fields
-
-Commit:
-
-`feat: add re-query based repair loop and correction trace`
-
-### Day 2
-
-- realistic HelixCloud knowledge base
-- stronger sample scenarios
-- domain-aligned query presets
-
-Commit:
-
-`feat: add realistic HelixCloud knowledge base and demo scenarios`
-
-### Day 3
-
-- recent runs
-- analytics summary
-- pipeline verification
-
-Commit:
-
-`feat: add run analytics and recent execution history`
-
-### Day 4
-
-- dark product-style frontend redesign
-- evidence and claim review workflow
-- recent runs panel
-
-Commit:
-
-`feat: redesign frontend into a product-style review experience`
-
-### Day 5
-
-- cleanup
-- tests
-- edge-case fixes
-
-Commit:
-
-`fix: harden correction flow and add regression coverage`
-
-### Day 6
-
-- Dockerfile
-- Render config
-- README final pass
-
-Commit:
-
-`chore: add deployment config and final project documentation`
 
 ## Local Run
 
