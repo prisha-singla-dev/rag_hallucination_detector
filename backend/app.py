@@ -34,7 +34,7 @@ app.add_middleware(
 pipeline = HallucinationPipeline()
 FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
 
-
+# adding endpoints 
 @app.get("/", include_in_schema=False)
 def index() -> FileResponse:
     return FileResponse(FRONTEND_PATH)
@@ -51,7 +51,6 @@ def knowledge_base() -> dict[str, object]:
         "documents": pipeline.list_documents(),
         "document_count": len(pipeline.list_documents()),
     }
-
 
 @app.post("/query", response_model=QueryResponse)
 def query(payload: QueryRequest) -> QueryResponse:
