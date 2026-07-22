@@ -142,36 +142,30 @@ Returns aggregate run counts plus average hallucination and confidence-delta met
 ## Local Run
 
 ### 1. Create a virtual environment
-
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
 ### 2. Install dependencies
-
 ```powershell
 pip install -r requirements.txt
 ```
 
 ### 3. Start the API
-
 ```powershell
 uvicorn backend.app:app --reload --port 8001
 ```
 
 ### 4. Open the app
-
 Open [http://127.0.0.1:8001](http://127.0.0.1:8001)
 
 ### 5. Run tests
-
 ```powershell
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
 ### 6. Run with Docker
-
 ```powershell
 docker build -t rag-hallucination-detector .
 docker run -p 8000:8000 rag-hallucination-detector
