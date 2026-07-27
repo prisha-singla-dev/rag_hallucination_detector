@@ -75,14 +75,14 @@ Notes:
 
 ## Project Structure
 
-- [backend/app.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/app.py): FastAPI app, API routes, and frontend entry route
-- [backend/core/claim_extractor.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/core/claim_extractor.py): claim splitting and normalization
-- [backend/core/pipeline.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/core/pipeline.py): query, claim scoring, and auto-correction flow
-- [backend/core/retriever.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/backend/core/retriever.py): local retrieval with embedding fallback
-- [frontend/index.html](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/frontend/index.html): primary demo UI served by FastAPI
-- [data/knowledge_base.json](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/data/knowledge_base.json): seed knowledge base for local testing
-- [data/sample_queries.json](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/data/sample_queries.json): sample scenarios for future expansion
-- [tests/test_pipeline.py](C:/Users/prish/Downloads/rag-hallucinator-detector/rag_hallucination_detector/tests/test_pipeline.py): regression tests for the pipeline
+- [backend/app.py](backend/app.py): FastAPI app, API routes, and frontend entry route
+- [backend/core/claim_extractor.py](backend/core/claim_extractor.py): claim splitting and normalization
+- [backend/core/pipeline.py](backend/core/pipeline.py): query, claim scoring, and auto-correction flow
+- [backend/core/retriever.py](backend/core/retriever.py): local retrieval with embedding fallback
+- [frontend/index.html](frontend/index.html): primary demo UI served by FastAPI
+- [data/knowledge_base.json](data/knowledge_base.json): seed knowledge base for local testing
+- [data/sample_queries.json](data/sample_queries.json): sample scenarios for future expansion
+- [tests/test_pipeline.py](tests/test_pipeline.py): regression tests for the pipeline
 
 ## API Contract
 
@@ -142,31 +142,44 @@ Returns aggregate run counts plus average hallucination and confidence-delta met
 ## Local Run
 
 ### 1. Create a virtual environment
-```powershell
+```bash
 python -m venv .venv
-.venv\Scripts\Activate.ps1
+source .venv/bin/activate       # Windows PowerShell: .venv\Scripts\Activate.ps1
 ```
 
 ### 2. Install dependencies
-```powershell
+```bash
 pip install -r requirements.txt
 ```
+This installs only what the API needs to run in its default lexical
+retrieval mode. Two optional extras exist and are **not** required for
+the default demo path:
+- `requirements-ml.txt` -- adds sentence-transformers/faiss/numpy for
+  embedding or FAISS retrieval (see `RETRIEVAL_MODE` below).
+- `requirements-dashboard.txt` -- adds Streamlit for the secondary
+  dashboard at `dashboard/app.py`.
 
-### 3. Start the API
-```powershell
+### 3. (Optional) Configure environment variables
+Copy `.env.example` to `.env` and adjust `ALLOWED_ORIGINS`,
+`RETRIEVAL_MODE`, and `ENABLE_SENTENCE_TRANSFORMERS` as needed, then
+export them into your shell (this project does not auto-load `.env`
+files). Defaults work fine for local dev without any of this.
+
+### 4. Start the API
+```bash
 uvicorn backend.app:app --reload --port 8001
 ```
 
-### 4. Open the app
+### 5. Open the app
 Open [http://127.0.0.1:8001](http://127.0.0.1:8001)
 
-### 5. Run tests
-```powershell
+### 6. Run tests
+```bash
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-### 6. Run with Docker
-```powershell
+### 7. Run with Docker
+```bash
 docker build -t rag-hallucination-detector .
 docker run -p 8000:8000 rag-hallucination-detector
 ```
