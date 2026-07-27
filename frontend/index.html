@@ -175,7 +175,7 @@
       }
 
       h2,
-      h3,
+      h2,
       h4 {
         margin: 0;
       }
@@ -829,6 +829,23 @@
         return typeof value === "number" ? value.toFixed(2) : "--";
       }
 
+      // All dynamic strings rendered via innerHTML below (question text,
+      // claim text, evidence titles/sources, correction reasons, etc.) come
+      // either from user input or from knowledge-base content, so none of
+      // it can be trusted to be free of HTML. Escape everything before it
+      // goes into a template literal that gets assigned to innerHTML.
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, (char) => (
+          {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;",
+          }[char]
+        ));
+      }
+
       function formatDate(value) {
         if (!value) return "--";
         return new Date(value).toLocaleString();
@@ -942,12 +959,12 @@
           item.innerHTML = `
             <div class="stack-head">
               <div>
-                <strong>${run.question}</strong>
-                <p class="list-meta">${formatDate(run.created_at)}</p>
+                <strong>${escapeHtml(run.question)}</strong>
+                <p class="list-meta">${escapeHtml(formatDate(run.created_at))}</p>
               </div>
-              <span class="badge info">${run.mode}</span>
+              <span class="badge info">${escapeHtml(run.mode)}</span>
             </div>
-            <div class="trace-meta">risk ${formatNumber(run.hallucination_score)} | unsupported ${run.unsupported_claim_count} | retrieval ${run.retrieval_mode}</div>
+            <div class="trace-meta">risk ${formatNumber(run.hallucination_score)} | unsupported ${Number(run.unsupported_claim_count) || 0} | retrieval ${escapeHtml(run.retrieval_mode)}</div>
           `;
           historyList.appendChild(item);
         });
@@ -972,12 +989,12 @@
           card.innerHTML = `
             <div class="stack-head">
               <div>
-                <strong>${item.evidence.title}</strong>
-                <p class="list-meta">${item.evidence.source}</p>
+                <strong>${escapeHtml(item.evidence.title)}</strong>
+                <p class="list-meta">${escapeHtml(item.evidence.source)}</p>
               </div>
-              <span class="badge ${item.verdict === "unsupported" ? "danger" : "success"}">${item.verdict}</span>
+              <span class="badge ${item.verdict === "unsupported" ? "danger" : "success"}">${escapeHtml(item.verdict)}</span>
             </div>
-            <p class="claim-text">${item.claim}</p>
+            <p class="claim-text">${escapeHtml(item.claim)}</p>
             <div class="trace-meta">support ${formatNumber(item.support_score)}</div>
           `;
           claimsList.appendChild(card);
@@ -998,16 +1015,18 @@
         steps.forEach((step) => {
           const card = document.createElement("article");
           card.className = "stack-item";
-          const evidenceLabel = step.evidence ? `${step.evidence.title} | ${step.evidence.source}` : "No supporting evidence retained";
+          const evidenceLabel = step.evidence
+            ? `${escapeHtml(step.evidence.title)} | ${escapeHtml(step.evidence.source)}`
+            : "No supporting evidence retained";
           card.innerHTML = `
             <div class="stack-head">
               <div>
-                <strong>${step.original_claim}</strong>
-                <p class="list-meta">${step.reason}</p>
+                <strong>${escapeHtml(step.original_claim)}</strong>
+                <p class="list-meta">${escapeHtml(step.reason)}</p>
               </div>
-              <span class="badge ${step.action === "removed" ? "danger" : step.action === "replaced" ? "info" : "success"}">${step.action}</span>
+              <span class="badge ${step.action === "removed" ? "danger" : step.action === "replaced" ? "info" : "success"}">${escapeHtml(step.action)}</span>
             </div>
-            ${step.rewritten_claim ? `<p class="trace-text">${step.rewritten_claim}</p>` : ""}
+            ${step.rewritten_claim ? `<p class="trace-text">${escapeHtml(step.rewritten_claim)}</p>` : ""}
             <div class="trace-meta">${evidenceLabel}</div>
           `;
           traceList.appendChild(card);
@@ -1028,12 +1047,12 @@
           card.innerHTML = `
             <div class="stack-head">
               <div>
-                <strong>${item.title}</strong>
-                <p class="list-meta">${item.source}</p>
+                <strong>${escapeHtml(item.title)}</strong>
+                <p class="list-meta">${escapeHtml(item.source)}</p>
               </div>
               <span class="badge info">score ${formatNumber(item.score)}</span>
             </div>
-            <p class="evidence-text">${item.text}</p>
+            <p class="evidence-text">${escapeHtml(item.text)}</p>
           `;
           evidenceList.appendChild(card);
         });
