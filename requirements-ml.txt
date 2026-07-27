@@ -1,0 +1,12 @@
+# Optional embedding / FAISS retrieval mode.
+# Install this ONLY if you plan to set ENABLE_SENTENCE_TRANSFORMERS=1 and/or
+# RETRIEVAL_MODE=embedding|faiss (see backend/core/retriever.py).
+# The API and its default lexical retrieval mode work without these.
+#
+#   pip install -r requirements.txt -r requirements-ml.txt
+#
+# Versions below are verified to have prebuilt wheels for Python 3.10-3.12
+# (no local compilation required).
+numpy==1.26.4
+faiss-cpu==1.9.0
+sentence-transformers==3.3.1

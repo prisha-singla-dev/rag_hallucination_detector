@@ -1,0 +1,8 @@
+# Optional Streamlit dashboard (dashboard/app.py).
+# The primary product UI is the FastAPI-served frontend/index.html;
+# this dashboard is a secondary/internal view into the same API.
+#
+#   pip install -r requirements.txt -r requirements-dashboard.txt
+#   streamlit run dashboard/app.py
+streamlit==1.38.0
+requests==2.32.3
