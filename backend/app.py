@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -17,6 +18,30 @@ from backend.core.schemas import (
 )
 
 
+# The frontend is served by this same FastAPI app (see `index()` below), so
+# same-origin browser traffic never needs CORS at all. CORS only matters for
+# other origins calling this API directly -- e.g. the Streamlit dashboard
+# during local dev, or a separately hosted frontend in the future. Configure
+# real origins via the ALLOWED_ORIGINS env var (comma-separated); default to
+# common local dev origins only. No cookies/sessions are used by this API,
+# so allow_credentials stays False -- flip it on only if that ever changes.
+DEFAULT_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:8000",
+    "http://localhost:8001",
+    "http://127.0.0.1:8001",
+    "http://localhost:8501",  # Streamlit dashboard default port
+    "http://127.0.0.1:8501",
+]
+
+
+def _allowed_origins() -> list[str]:
+    raw = os.getenv("ALLOWED_ORIGINS")
+    if not raw:
+        return DEFAULT_ALLOWED_ORIGINS
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
 app = FastAPI(
     title="RAG Hallucination Detector",
     description="A free MVP for detecting and auto-correcting unsupported claims in a RAG answer.",
@@ -25,10 +50,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=_allowed_origins(),
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
 )
 
 pipeline = HallucinationPipeline()
