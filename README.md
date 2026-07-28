@@ -55,7 +55,6 @@ What we are intentionally not doing in the first ship:
 - multi-tenant auth or production-grade observability
 
 ## Free Stack
-
 - Python
 - FastAPI
 - HTML/CSS/JavaScript
@@ -144,7 +143,8 @@ Returns aggregate run counts plus average hallucination and confidence-delta met
 ### 1. Create a virtual environment
 ```bash
 python -m venv .venv
-source .venv/bin/activate       # Windows PowerShell: .venv\Scripts\Activate.ps1
+source .venv/bin/activate       
+# Windows PowerShell: .venv\Scripts\Activate.ps1
 ```
 
 ### 2. Install dependencies
