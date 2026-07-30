@@ -1,9 +1,19 @@
 # Core API dependencies only.
-# The API runs in lexical retrieval mode by default and does not need
-# numpy/faiss/sentence-transformers unless embedding mode is enabled.
-# See requirements-ml.txt for that optional path and
-# requirements-dashboard.txt for the Streamlit dashboard.
+# The API runs in lexical retrieval/grounding mode by default and does not
+# need numpy/faiss/sentence-transformers unless embedding retrieval and/or
+# NLI grounding are enabled. See requirements-ml.txt for that optional path
+# and requirements-dashboard.txt for the Streamlit dashboard.
+#
+# google-genai is here (not in requirements-ml.txt) because real answer
+# generation is a core, not optional, code path now: without a
+# GEMINI_API_KEY it degrades to the template generator automatically, but
+# the dependency itself is lightweight (no heavy ML libs) so there's no
+# reason to gate it behind the ML extras.
+#
+# pydantic bumped from 2.9.2 -> 2.12.5: google-genai requires pydantic>=2.12.5,
+# and fastapi==0.115.0 is compatible with any pydantic v2, so this is a safe
+# bump rather than a forced one.
 fastapi==0.115.0
 uvicorn[standard]==0.30.6
-pydantic==2.9.2
-google-genai
+pydantic==2.12.5
+google-genai==2.14.0
