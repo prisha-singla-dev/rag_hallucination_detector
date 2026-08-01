@@ -6,6 +6,8 @@ from statistics import mean
 from uuid import uuid4
 
 from backend.core.claim_extractor import extract_claims, normalize_claim
+from backend.core.generator import AnswerGenerator, GeneratedAnswer
+from backend.core.grounding import GroundingScorer, build_default_grounding_scorer
 from backend.core.knowledge_base import KnowledgeChunk, list_document_sources, load_knowledge_chunks
 from backend.core.retriever import HybridRetriever
 from backend.core.schemas import (
@@ -22,14 +24,22 @@ from backend.core.schemas import (
 )
 
 
-MIN_GROUNDED_SCORE = 0.42
 MAX_RUN_HISTORY = 50
 
 
 class HallucinationPipeline:
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        generator: AnswerGenerator | None = None,
+        grounding_scorer: GroundingScorer | None = None,
+    ) -> None:
         self._chunks = load_knowledge_chunks()
         self._retriever = HybridRetriever(self._chunks)
+        # Both are overridable for tests (avoids hitting the real Gemini API
+        # or downloading the NLI model in unit tests); production code builds
+        # them from env vars via the same factories the API layer uses.
+        self._generator = generator or AnswerGenerator()
+        self._grounding_scorer = grounding_scorer or build_default_grounding_scorer()
         self._run_history: deque[RunRecord] = deque(maxlen=MAX_RUN_HISTORY)
 
     def list_documents(self) -> list[dict[str, str]]:
@@ -47,37 +57,23 @@ class HallucinationPipeline:
     def _split_claims(self, answer: str) -> list[str]:
         return extract_claims(answer)
 
-    def _generate_answer(self, question: str, retrieved_chunks: list[EvidenceChunk], simulate_hallucination: bool) -> str:
-        if not retrieved_chunks:
-            return "I could not retrieve any relevant context from the knowledge base."
-
-        answer_parts: list[str] = []
-        lead = retrieved_chunks[0].text.rstrip(".")
-        answer_parts.append(f"The retrieved evidence suggests that {lead}.")
-
-        supporting_chunks = retrieved_chunks[1:3]
-        for chunk in supporting_chunks:
-            supporting_text = chunk.text.rstrip(".")
-            answer_parts.append(f"It also shows that {supporting_text.lower()}.")
-
-        if simulate_hallucination:
-            answer_parts.append(
-                "The system has already proven a verified 99.9 percent factual accuracy in live production deployments."
-            )
-        return " ".join(answer_parts)
+    def _generate_answer(
+        self, question: str, retrieved_chunks: list[EvidenceChunk], simulate_hallucination: bool
+    ) -> GeneratedAnswer:
+        return self._generator.generate(question, retrieved_chunks, adversarial=simulate_hallucination)
 
     def _score_claims(self, claims: list[str], chunks: list[KnowledgeChunk]) -> list[ClaimResult]:
         results: list[ClaimResult] = []
         candidate_chunks = chunks or self._chunks
         for claim in claims:
-            best_match = self._retriever.best_supporting_chunk(claim, candidate_chunks)
-            verdict = "grounded" if best_match.score >= MIN_GROUNDED_SCORE else "unsupported"
+            grounding = self._grounding_scorer.score(claim, candidate_chunks)
             results.append(
                 ClaimResult(
                     claim=claim,
-                    verdict=verdict,
-                    support_score=round(best_match.score, 4),
-                    evidence=self._to_evidence(best_match.chunk, best_match.score),
+                    verdict=grounding.verdict,
+                    support_score=grounding.support_score,
+                    evidence=self._to_evidence(grounding.chunk, grounding.support_score),
+                    grounding_method=grounding.method,
                 )
             )
         return results
@@ -231,6 +227,20 @@ class HallucinationPipeline:
             return 0.0
         return round(mean(scores), 4)
 
+    @staticmethod
+    def _claim_counts(claim_results: list[ClaimResult]) -> tuple[int, int, int]:
+        """Returns (grounded, unsupported, contradicted) counts.
+
+        Counted explicitly per verdict rather than derived as
+        `total - unsupported` -- with the verdict now three-way
+        (grounded/unsupported/contradicted), that subtraction would silently
+        misclassify contradicted claims as grounded.
+        """
+        grounded = len([c for c in claim_results if c.verdict == "grounded"])
+        unsupported = len([c for c in claim_results if c.verdict == "unsupported"])
+        contradicted = len([c for c in claim_results if c.verdict == "contradicted"])
+        return grounded, unsupported, contradicted
+
     def _retrieved_evidence(self, question: str, top_k: int) -> tuple[list[KnowledgeChunk], list[EvidenceChunk]]:
         retrieval_results = self._retriever.retrieve(question, top_k=top_k)
         raw_chunks = [item.chunk for item in retrieval_results]
@@ -247,6 +257,7 @@ class HallucinationPipeline:
         answer_confidence: float,
         corrected_confidence: float,
         unsupported_claim_count: int,
+        contradicted_claim_count: int,
     ) -> None:
         self._run_history.appendleft(
             RunRecord(
@@ -258,7 +269,9 @@ class HallucinationPipeline:
                 answer_confidence=answer_confidence,
                 corrected_confidence=corrected_confidence,
                 unsupported_claim_count=unsupported_claim_count,
+                contradicted_claim_count=contradicted_claim_count,
                 retrieval_mode=self._retriever.last_retrieval_mode,
+                grounding_mode=self._grounding_scorer.method_name,
             )
         )
 
@@ -293,7 +306,8 @@ class HallucinationPipeline:
 
     def run_query(self, payload: QueryRequest) -> QueryResponse:
         raw_chunks, evidence = self._retrieved_evidence(payload.question, payload.top_k)
-        answer = self._generate_answer(payload.question, evidence, payload.simulate_hallucination)
+        generated = self._generate_answer(payload.question, evidence, payload.simulate_hallucination)
+        answer = generated.text
         claim_results = self._score_claims(self._split_claims(answer), raw_chunks)
         repaired_claims, correction_steps, repair_chunks = self._repair_unsupported_claims(
             payload.question,
@@ -309,9 +323,10 @@ class HallucinationPipeline:
             claim_results,
             verdict="grounded",
         )
-        unsupported_claim_count = len([claim for claim in claim_results if claim.verdict == "unsupported"])
-        grounded_claim_count = len(claim_results) - unsupported_claim_count
-        hallucination_score = round(unsupported_claim_count / max(len(claim_results), 1), 4)
+        grounded_claim_count, unsupported_claim_count, contradicted_claim_count = self._claim_counts(claim_results)
+        hallucination_score = round(
+            (unsupported_claim_count + contradicted_claim_count) / max(len(claim_results), 1), 4
+        )
         run_id = f"run-{uuid4().hex[:10]}"
         created_at = datetime.now(timezone.utc)
         response_evidence = [self._to_evidence(chunk, 0.0) for chunk in final_chunks]
@@ -325,6 +340,7 @@ class HallucinationPipeline:
             answer_confidence=answer_confidence,
             corrected_confidence=corrected_confidence,
             unsupported_claim_count=unsupported_claim_count,
+            contradicted_claim_count=contradicted_claim_count,
         )
 
         return QueryResponse(
@@ -334,12 +350,17 @@ class HallucinationPipeline:
             answer=answer,
             corrected_answer=corrected_answer,
             retrieval_mode=self._retriever.last_retrieval_mode,
+            generation_mode=generated.mode,
+            generation_model=generated.model,
+            generation_warning=generated.warning,
+            grounding_mode=self._grounding_scorer.method_name,
             answer_confidence=answer_confidence,
             corrected_confidence=corrected_confidence,
             confidence_delta=round(corrected_confidence - answer_confidence, 4),
             hallucination_score=hallucination_score,
             grounded_claim_count=grounded_claim_count,
             unsupported_claim_count=unsupported_claim_count,
+            contradicted_claim_count=contradicted_claim_count,
             claims=claim_results,
             correction_steps=correction_steps,
             retrieved_chunks=response_evidence,
@@ -362,9 +383,10 @@ class HallucinationPipeline:
             claim_results,
             verdict="grounded",
         )
-        unsupported_claim_count = len([claim for claim in claim_results if claim.verdict == "unsupported"])
-        grounded_claim_count = len(claim_results) - unsupported_claim_count
-        hallucination_score = round(unsupported_claim_count / max(len(claim_results), 1), 4)
+        grounded_claim_count, unsupported_claim_count, contradicted_claim_count = self._claim_counts(claim_results)
+        hallucination_score = round(
+            (unsupported_claim_count + contradicted_claim_count) / max(len(claim_results), 1), 4
+        )
         run_id = f"run-{uuid4().hex[:10]}"
         created_at = datetime.now(timezone.utc)
         response_evidence = [self._to_evidence(chunk, 0.0) for chunk in final_chunks]
@@ -378,6 +400,7 @@ class HallucinationPipeline:
             answer_confidence=answer_confidence,
             corrected_confidence=corrected_confidence,
             unsupported_claim_count=unsupported_claim_count,
+            contradicted_claim_count=contradicted_claim_count,
         )
 
         return DetectResponse(
@@ -387,12 +410,17 @@ class HallucinationPipeline:
             answer=payload.answer,
             corrected_answer=corrected_answer,
             retrieval_mode=self._retriever.last_retrieval_mode,
+            generation_mode="user_provided",
+            generation_model=None,
+            generation_warning=None,
+            grounding_mode=self._grounding_scorer.method_name,
             answer_confidence=answer_confidence,
             corrected_confidence=corrected_confidence,
             confidence_delta=round(corrected_confidence - answer_confidence, 4),
             hallucination_score=hallucination_score,
             grounded_claim_count=grounded_claim_count,
             unsupported_claim_count=unsupported_claim_count,
+            contradicted_claim_count=contradicted_claim_count,
             claims=claim_results,
             correction_steps=correction_steps,
             retrieved_chunks=response_evidence,
