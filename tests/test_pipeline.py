@@ -53,11 +53,21 @@ class PipelineTests(unittest.TestCase):
         self.assertTrue(any(step.action in {"replaced", "removed"} for step in result.correction_steps))
 
     def test_detect_flow_keeps_grounded_answer(self) -> None:
+        # Deliberately pinned to LexicalGroundingScorer rather than relying
+        # on self.pipeline's env-derived default: this test's purpose is to
+        # verify the repair loop leaves an already-correct, verbatim answer
+        # untouched, not to assert that every scorer agrees on every claim.
+        # NLI is measurably stricter than lexical overlap (see
+        # eval/results/README.md) -- a pipeline test with an implicit,
+        # environment-dependent scorer choice is exactly the kind of test
+        # that looks like it's testing the pipeline but is actually testing
+        # "whatever GROUNDING_MODE happens to be set to on this machine."
+        pipeline = HallucinationPipeline(grounding_scorer=LexicalGroundingScorer())
         answer = (
             "Enterprise workspaces include audit logs for sign-in activity, source sync events, role changes, "
             "and report exports. Audit events are retained for 90 days."
         )
-        result = self.pipeline.run_detection(
+        result = pipeline.run_detection(
             DetectRequest(
                 question="What events appear in HelixCloud audit logs and how long are those logs retained?",
                 answer=answer,
