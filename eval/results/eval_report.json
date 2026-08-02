@@ -1,0 +1,44 @@
+{
+  "generated_at": "2026-08-02T17:01:47.221773+00:00",
+  "example_count": 42,
+  "reports": {
+    "lexical": {
+      "confusion_matrix": {
+        "grounded": {
+          "grounded": 14,
+          "unsupported": 0,
+          "contradicted": 0
+        },
+        "unsupported": {
+          "grounded": 1,
+          "unsupported": 13,
+          "contradicted": 0
+        },
+        "contradicted": {
+          "grounded": 13,
+          "unsupported": 1,
+          "contradicted": 0
+        }
+      },
+      "per_class": {
+        "grounded": {
+          "precision": 0.5,
+          "recall": 1.0,
+          "f1": 0.6667
+        },
+        "unsupported": {
+          "precision": 0.9286,
+          "recall": 0.9286,
+          "f1": 0.9286
+        },
+        "contradicted": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "accuracy": 0.6429,
+      "macro_f1": 0.5318
+    }
+  }
+}
