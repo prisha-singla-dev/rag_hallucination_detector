@@ -444,6 +444,11 @@
         color: #67e8f9;
       }
 
+      .badge.warning {
+        background: var(--warning-soft);
+        color: #fcd34d;
+      }
+
       .stack {
         display: grid;
         gap: 12px;
@@ -606,6 +611,14 @@
               <div class="meta-card">
                 <div class="meta-label">Retrieval</div>
                 <div class="meta-value mono" id="retrieval-mode">--</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Generation</div>
+                <div class="meta-value mono" id="generation-mode">--</div>
+              </div>
+              <div class="meta-card">
+                <div class="meta-label">Grounding</div>
+                <div class="meta-value mono" id="grounding-mode">--</div>
               </div>
               <div class="meta-card">
                 <div class="meta-label">Timestamp</div>
@@ -808,6 +821,8 @@
       const bannerCopy = document.getElementById("banner-copy");
       const runId = document.getElementById("run-id");
       const retrievalMode = document.getElementById("retrieval-mode");
+      const generationMode = document.getElementById("generation-mode");
+      const groundingMode = document.getElementById("grounding-mode");
       const timestampValue = document.getElementById("timestamp-value");
       const riskValue = document.getElementById("risk-value");
       const confidenceValue = document.getElementById("confidence-value");
@@ -964,10 +979,16 @@
               </div>
               <span class="badge info">${escapeHtml(run.mode)}</span>
             </div>
-            <div class="trace-meta">risk ${formatNumber(run.hallucination_score)} | unsupported ${Number(run.unsupported_claim_count) || 0} | retrieval ${escapeHtml(run.retrieval_mode)}</div>
+            <div class="trace-meta">risk ${formatNumber(run.hallucination_score)} | unsupported ${Number(run.unsupported_claim_count) || 0} | contradicted ${Number(run.contradicted_claim_count) || 0} | retrieval ${escapeHtml(run.retrieval_mode)} | grounding ${escapeHtml(run.grounding_mode)}</div>
           `;
           historyList.appendChild(item);
         });
+      }
+
+      function badgeClassForVerdict(verdict) {
+        if (verdict === "contradicted") return "warning";
+        if (verdict === "unsupported") return "danger";
+        return "success";
       }
 
       function renderClaimResults(items) {
@@ -979,10 +1000,10 @@
           return 0;
         }
 
-        let unsupported = 0;
+        let flagged = 0;
 
         items.forEach((item) => {
-          if (item.verdict === "unsupported") unsupported += 1;
+          if (item.verdict !== "grounded") flagged += 1;
 
           const card = document.createElement("article");
           card.className = "stack-item";
@@ -992,15 +1013,15 @@
                 <strong>${escapeHtml(item.evidence.title)}</strong>
                 <p class="list-meta">${escapeHtml(item.evidence.source)}</p>
               </div>
-              <span class="badge ${item.verdict === "unsupported" ? "danger" : "success"}">${escapeHtml(item.verdict)}</span>
+              <span class="badge ${badgeClassForVerdict(item.verdict)}">${escapeHtml(item.verdict)}</span>
             </div>
             <p class="claim-text">${escapeHtml(item.claim)}</p>
-            <div class="trace-meta">support ${formatNumber(item.support_score)}</div>
+            <div class="trace-meta">support ${formatNumber(item.support_score)} | method ${escapeHtml(item.grounding_method)}</div>
           `;
           claimsList.appendChild(card);
         });
 
-        return unsupported;
+        return flagged;
       }
 
       function renderCorrectionSteps(steps) {
@@ -1097,6 +1118,10 @@
 
           runId.textContent = result.run_id;
           retrievalMode.textContent = result.retrieval_mode;
+          generationMode.textContent = result.generation_model
+            ? `${result.generation_mode} (${result.generation_model})`
+            : result.generation_mode;
+          groundingMode.textContent = result.grounding_mode;
           timestampValue.textContent = formatDate(result.created_at);
           riskValue.textContent = formatNumber(result.hallucination_score);
           confidenceValue.textContent = formatNumber(result.answer_confidence);
@@ -1105,14 +1130,16 @@
           originalAnswer.textContent = result.answer;
           correctedAnswer.textContent = result.corrected_answer;
 
-          const unsupported = renderClaimResults(result.claims);
+          const flaggedCount = renderClaimResults(result.claims);
           renderCorrectionSteps(result.correction_steps);
           renderEvidence(result.retrieved_chunks);
 
-          if (unsupported > 0) {
+          if (result.generation_warning) {
+            setBanner("warning", "Generation fell back to template", result.generation_warning);
+          } else if (flaggedCount > 0) {
             setBanner(
               "warning",
-              `${unsupported} unsupported claim${unsupported > 1 ? "s" : ""} detected`,
+              `${flaggedCount} claim${flaggedCount > 1 ? "s" : ""} flagged (unsupported or contradicted)`,
               "The repair loop re-queried those claims and either replaced them with grounded evidence or removed them."
             );
           } else {
