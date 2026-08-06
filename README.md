@@ -12,7 +12,7 @@ Free MVP for catching unsupported claims in a retrieval-augmented generation pip
 - repair loop for unsupported claims
 - run history and analytics endpoints
 
-### Phase 2: Demo data
+### Phase 2: Demo data -- working
 
 - realistic product-doc knowledge base
 - believable questions
