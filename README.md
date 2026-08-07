@@ -19,7 +19,6 @@ Free MVP for catching unsupported claims in a retrieval-augmented generation pip
 - visible hallucination and correction cases
 
 ### Phase 3: Frontend experience
-
 - dark product-style interface
 - query and inspect modes
 - correction trace
@@ -38,7 +37,6 @@ Free MVP for catching unsupported claims in a retrieval-augmented generation pip
 This repo is optimized for a no-cost demo between July 15 and July 20.
 
 What the MVP does:
-
 - retrieves relevant knowledge chunks for a user query
 - generates an answer from retrieved context using the real Gemini API (falls
   back to a clearly-labeled template if no `GEMINI_API_KEY` is configured)
