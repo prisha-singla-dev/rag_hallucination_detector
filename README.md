@@ -51,14 +51,12 @@ What the MVP does:
   frontend
 
 What we are intentionally not doing yet:
-
 - persistent storage (run history is in-memory and resets on restart)
 - authentication or multi-tenant support
 - production-grade observability (structured logging, metrics, tracing)
 - hosted vector databases or large-scale ingestion pipelines
 
 ## Free Stack
-
 - Python
 - FastAPI
 - HTML/CSS/JavaScript
@@ -69,7 +67,6 @@ What we are intentionally not doing yet:
 - FAISS (optional embedding retrieval)
 
 ## Current Demo Domain
-
 The project currently uses a fictional but realistic product-doc knowledge base for `HelixCloud`, a workspace platform for search, document chat, and support workflows.
 
 Notes:
