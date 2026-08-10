@@ -70,7 +70,6 @@ What we are intentionally not doing yet:
 The project currently uses a fictional but realistic product-doc knowledge base for `HelixCloud`, a workspace platform for search, document chat, and support workflows.
 
 Notes:
-
 - The code uses lexical retrieval and lexical grounding by default so the MVP
   stays runnable on a clean machine with zero ML dependencies.
 - Set `GEMINI_API_KEY` to get real LLM-generated answers (`generation_mode:
