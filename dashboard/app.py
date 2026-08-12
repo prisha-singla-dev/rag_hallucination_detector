@@ -37,7 +37,7 @@ def render_claim(claim: dict[str, object]) -> None:
         f"""
         <div style="border-left: 4px solid {color}; padding: 0.6rem 1rem; margin-bottom: 0.75rem; background: #11182708;">
             <div style="font-weight: 700; color: {color}; text-transform: capitalize;">{verdict}</div>
-            <div style="margin-top: 0.4rem;">{claim["claim"]}</div>
+            <div style="margin-top: 0.41rem;">{claim["claim"]}</div>
             <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #475569;">
                 Support score: {claim["support_score"]} | Evidence: {claim["evidence"]["title"]}
             </div>
