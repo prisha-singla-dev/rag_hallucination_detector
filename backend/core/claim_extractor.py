@@ -1,7 +1,5 @@
 from __future__ import annotations
-
 import re
-
 
 SENTENCE_BOUNDARY_PATTERN = re.compile(r"(?<=[.!?])\s+|\n+|;\s+")
 LEADING_MARKER_PATTERN = re.compile(r"^(?:[-*]\s+|\d+[.)]\s+)+")
