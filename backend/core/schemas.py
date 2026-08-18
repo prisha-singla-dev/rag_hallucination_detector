@@ -31,7 +31,6 @@ class EvidenceChunk(BaseModel):
     text: str
     score: float
 
-
 class ClaimResult(BaseModel):
     claim: str
     verdict: Literal["grounded", "unsupported", "contradicted"]
@@ -39,14 +38,12 @@ class ClaimResult(BaseModel):
     evidence: EvidenceChunk
     grounding_method: Literal["lexical", "nli"]
 
-
 class CorrectionStep(BaseModel):
     original_claim: str
     action: Literal["kept", "replaced", "removed"]
     rewritten_claim: str | None = None
     reason: str
     evidence: EvidenceChunk | None = None
-
 
 class BaseDetectionResponse(BaseModel):
     run_id: str
@@ -70,14 +67,11 @@ class BaseDetectionResponse(BaseModel):
     correction_steps: list[CorrectionStep]
     retrieved_chunks: list[EvidenceChunk]
 
-
 class QueryResponse(BaseDetectionResponse):
     pass
 
-
 class DetectResponse(BaseDetectionResponse):
     pass
-
 
 class RunRecord(BaseModel):
     run_id: str
@@ -92,11 +86,9 @@ class RunRecord(BaseModel):
     retrieval_mode: str
     grounding_mode: Literal["lexical", "nli"]
 
-
 class RunHistoryResponse(BaseModel):
     total_runs: int
     runs: list[RunRecord]
-
 
 class AnalyticsSummaryResponse(BaseModel):
     total_runs: int

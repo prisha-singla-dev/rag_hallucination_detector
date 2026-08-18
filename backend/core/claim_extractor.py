@@ -29,7 +29,6 @@ def normalize_claim(text: str) -> str:
 
     return claim.strip(" -")
 
-
 def extract_claims(answer: str) -> list[str]:
     if not answer.strip():
         return []
