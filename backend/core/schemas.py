@@ -13,7 +13,7 @@ class QueryRequest(BaseModel):
         description=(
             "When true, asks the generator to slip one fabricated sentence into "
             "the answer (a genuine adversarial prompt against the LLM when "
-            "GEMINI_API_KEY is set, or a fixed injected sentence in template "
+            "GEMINI_API_KEY is set/is to be set, or a fixed injected sentence in template "
             "mode) so the detector has something real to catch in demos."
         ),
     )
