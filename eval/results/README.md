@@ -25,19 +25,48 @@ topic" vs. "different topic". This is the actual, measured justification for
 adding the NLI scorer, not just an assumption that a fancier model must be
 better.
 
-## NLI scorer -- not yet run
+## NLI scorer (real numbers, `cross-encoder/nli-deberta-v3-base`)
 
-=== Lexical (token-overlap) scorer ===
-Accuracy: 64.29%   Macro-F1: 0.5318
+=== NLI (cross-encoder) scorer ===
+Accuracy: 92.86%   Macro-F1: 0.9285
 label          precision    recall        f1
-grounded            0.50      1.00      0.67
-unsupported         0.93      0.93      0.93
-contradicted        0.00      0.00      0.00
+grounded            1.00      1.00      1.00
+unsupported         0.92      0.86      0.89
+contradicted        0.87      0.93      0.90
 Confusion matrix (rows=true, cols=predicted):
                     grounded   unsupported  contradicted
 grounded                  14             0             0
-unsupported                1            13             0
-contradicted              13             1             0
+unsupported                0            12             2
+contradicted               0             1            13
+
+
+
+The number that matters most: **contradicted recall goes from 0% (lexical)
+to 93% (NLI)** -- 13 of 14 hand-written contradictions correctly caught,
+versus zero for the lexical scorer. `grounded` is perfect (1.00/1.00/1.00);
+the small residual errors are between `unsupported` and `contradicted` (2
+unsupported claims misread as contradicted, 1 contradicted claim misread as
+unsupported) -- both are "flag this claim" outcomes for a user, so the
+practically-important distinction (grounded vs. not-grounded) is essentially
+error-free at 42/42.
+
+This is the real, measured justification for the NLI upgrade: lexical
+overlap is structurally incapable of representing "agrees" vs. "disagrees,"
+only "similar topic" vs. "different topic" -- no amount of threshold tuning
+fixes that. The cross-encoder, trained on natural language inference,
+captures the semantic relationship directly.
+
+```bash
+pip install -r requirements-ml.txt
+python -m eval.run_eval --scorer nli
+# or: python -m eval.run_eval        (runs both side by side)
+```
+
+The script runs `_assert_label_order()` first -- three unambiguous
+hand-labeled pairs -- and will raise loudly instead of producing numbers if
+the model's entailment/contradiction/neutral labels come back in an
+unexpected order, so a passing run is itself a basic correctness check, not
+just a benchmark.
 
 
 
