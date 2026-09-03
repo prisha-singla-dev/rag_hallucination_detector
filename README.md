@@ -184,7 +184,8 @@ pip install -r requirements.txt
 This installs only what the API needs to run in its default lexical
 retrieval mode. Two optional extras exist and are **not** required for
 the default demo path:
-- `requirements-ml.txt` -- adds sentence-transformers/faiss/numpy for
+- `requirements-ml.txt
+` -- adds sentence-transformers/faiss/numpy for
   embedding or FAISS retrieval (see `RETRIEVAL_MODE` below).
 - `requirements-dashboard.txt` -- adds Streamlit for the secondary
   dashboard at `dashboard/app.py`.
