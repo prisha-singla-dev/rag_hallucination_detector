@@ -56,7 +56,15 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
-pipeline = HallucinationPipeline()
+# pipeline = HallucinationPipeline()
+# Persist run history to a real file so it survives container restarts
+# (common on free hosting tiers) instead of the old in-memory deque, which
+# wiped every run on redeploy. Override via DATABASE_PATH in production if
+# the deployment target needs a different writable location (e.g. a mounted
+# volume).
+DATABASE_PATH = os.getenv("DATABASE_PATH", "data/app.db")
+pipeline = HallucinationPipeline(db_path=DATABASE_PATH)
+
 FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
 
 # adding endpoints 
