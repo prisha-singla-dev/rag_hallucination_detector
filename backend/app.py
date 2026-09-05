@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import os
+import uuid
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 
+from backend.core.logging_config import configure_logging, get_logger, now_ms
 from backend.core.pipeline import HallucinationPipeline
 from backend.core.schemas import (
     AnalyticsSummaryResponse,
@@ -16,6 +18,10 @@ from backend.core.schemas import (
     QueryResponse,
     RunHistoryResponse,
 )
+
+
+configure_logging(os.getenv("LOG_LEVEL"))
+logger = get_logger("backend.app")
 
 
 # The frontend is served by this same FastAPI app (see `index()` below), so
@@ -56,7 +62,6 @@ app.add_middleware(
     allow_headers=["Content-Type"],
 )
 
-# pipeline = HallucinationPipeline()
 # Persist run history to a real file so it survives container restarts
 # (common on free hosting tiers) instead of the old in-memory deque, which
 # wiped every run on redeploy. Override via DATABASE_PATH in production if
@@ -64,10 +69,72 @@ app.add_middleware(
 # volume).
 DATABASE_PATH = os.getenv("DATABASE_PATH", "data/app.db")
 pipeline = HallucinationPipeline(db_path=DATABASE_PATH)
-
 FRONTEND_PATH = Path(__file__).resolve().parents[1] / "frontend" / "index.html"
 
-# adding endpoints 
+
+@app.middleware("http")
+async def request_logging_middleware(request: Request, call_next):
+    """Assigns a request ID and logs one structured line per request.
+
+    The request ID is echoed back in the X-Request-ID response header and
+    in any error body (see the exception handler below), so a user-reported
+    error can be correlated with the exact server-side log line -- there
+    was previously no logging at all outside the Phase 1 generation-fallback
+    warnings, so a deployed instance was effectively undebuggable.
+    """
+    request_id = str(uuid.uuid4())
+    request.state.request_id = request_id
+    start = now_ms()
+    try:
+        response = await call_next(request)
+    except Exception:
+        # Let the global exception_handler below build the client-facing
+        # response; here we only need to make sure this failure is still
+        # logged with timing/request_id before it propagates.
+        logger.exception(
+            "request_failed",
+            extra={
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "duration_ms": round(now_ms() - start, 2),
+            },
+        )
+        raise
+    duration_ms = round(now_ms() - start, 2)
+    response.headers["X-Request-ID"] = request_id
+    logger.info(
+        "request_completed",
+        extra={
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": response.status_code,
+            "duration_ms": duration_ms,
+        },
+    )
+    return response
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """Catch-all so an uncaught error never leaks a raw traceback to the
+    client. The full exception is already logged with its request_id by the
+    middleware above; this just guarantees a clean, consistent error
+    contract instead of FastAPI's default plaintext 500.
+    """
+    request_id = getattr(request.state, "request_id", "unknown")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": "internal_server_error",
+            "message": "Something went wrong processing your request.",
+            "request_id": request_id,
+        },
+    )
+
+
+# adding endpoints
 @app.get("/", include_in_schema=False)
 def index() -> FileResponse:
     return FileResponse(FRONTEND_PATH)
