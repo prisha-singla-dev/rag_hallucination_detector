@@ -3,3 +3,16 @@ services:
     name: rag-hallucination-detector
     runtime: docker
     plan: free
+    envVars:
+      # Pinned explicitly rather than relying on the code default or `auto`.
+      # The free tier's 512MB RAM cannot reliably load the NLI cross-encoder
+      # (torch + model weights alone need 700MB-1.5GB) -- attempting it risks
+      # OOM crashes or 10-30s+ cold starts after idle spin-down, which is the
+      # worst failure mode for a public demo. NLI grounding is fully built,
+      # tested, and evaluated (see eval/results/README.md); it's demonstrated
+      # via that eval report and local instructions in README.md rather than
+      # run live on this free-tier deployment. Upgrading to a paid tier
+      # (e.g. Render Starter, 2GB RAM) would make GROUNDING_MODE=nli viable
+      # here if that's ever worth the recurring cost.
+      - key: GROUNDING_MODE
+        value: lexical
